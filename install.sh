@@ -20,7 +20,7 @@ Title='\033[1;36m'
 Standard='\033[0;37m'
 
 # Title
-echo -e "${Title}Arch Linux installer${NC}"
+echo -e "${Title}Arch Linux (Install)${NC}"
 
 # Helper functions
 prompt_user() {
@@ -94,7 +94,7 @@ select_disk() {
   
   # Check if there's only one disk
   if [ ${#AVAILABLE_DISKS[@]} -eq 1 ]; then
-      echo -e "${Success}Only one disk detected, selecting it by default (${Default}${DEFAULT_TARGET_DISK}${Success})${NC}"
+      echo -e "${Prompt}Only one disk detected (${Default}${DEFAULT_TARGET_DISK}${Prompt})${NC}"
       TARGET_DISK=$DEFAULT_TARGET_DISK
       return
   fi
@@ -125,6 +125,8 @@ select_disk() {
 
 select_settings() {
   echo -e "${Heading}Configuration${NC}"
+  
+  select_disk
   prompt_user "Enter the new hostname" HOSTNAME
   prompt_user "Enter the new user" USERNAME
   prompt_user "Enter your country" COUNTRY true
@@ -289,7 +291,6 @@ finish() {
 # Execution order
 check_root
 check_uefi
-select_disk
 select_settings
 confirm_settings
 install
