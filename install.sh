@@ -11,12 +11,13 @@ DEFAULT_KERNEL="linux-zen"
 
 # Set up the colors
 NC='\033[0m' # No Color
-Prompt='\033[1;34m'
 Error='\033[1;31m'
 Success='\033[1;32m'
 Heading='\033[1;33m'
-Standard='\033[0;37m'
+Prompt='\033[1;34m'
 Default='\033[0;35m'
+Title='\033[1;36m'
+Standard='\033[0;37m'
 
 # Helper functions
 prompt_user() {
@@ -25,8 +26,16 @@ prompt_user() {
     local capitalize=$3
     local default_var_name="DEFAULT_${var_name^^}"
 
-    echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
-    read -r response
+    while true; do
+        echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
+        read -r response
+        if [[ $response = *[[:space:]]* ]]; then
+            echo -e "${Error}Please do not include spaces${NC}"
+        else
+            break
+        fi
+    done
+
     if [ "$capitalize" = true ]; then
         response=$(capitalize_first_letter "$response")
     fi
@@ -34,10 +43,10 @@ prompt_user() {
 }
 
 prompt_continue() {
-    echo -n "Do you want to continue? (Press Enter to continue, any other key to exit): "
+    echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
     read -rsn1 CONTINUE
     if [ "$CONTINUE" != "" ]; then
-      echo -e "\n${Error}Exiting${NC}"
+      echo -e "\n${Error}Aborted${NC}"
       exit 1
     fi
     echo
@@ -55,79 +64,100 @@ capitalize_first_letter() {
   fi
 }
 
-# Check if user is root
-if [ "$(id -u)" != "0" ]; then
-   echo -e "${Error}This script must be run as root.${NC}" 1>&2
-   exit 1
-fi
+# Functions
+check_root() {
+  if [ "$(id -u)" != "0" ]; then
+     echo -e "${Error}This script must be run as root.${NC}" 1>&2
+     exit 1
+  fi
+}
 
-# Exit if UEFI is not supported.
-if [ ! -d "/sys/firmware/efi/efivars" ]; then
-  echo -e "${Error}UEFI is not supported${NC}"
-  exit 1
-fi
+check_uefi() {
+  if [ ! -d "/sys/firmware/efi/efivars" ]; then
+    echo -e "${Error}UEFI is not supported${NC}"
+    exit 1
+  fi
+}
 
-# Select a disk to install to
-readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
-DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
+select_disk() {
+  readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
+  DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
+  
+  # Check if the array is empty
+  if [ ${#AVAILABLE_DISKS[@]} -eq 0 ]; then
+      echo -e "${Error}No disks detected${NC}"
+      exit 1
+  fi
+  
+  # Check if there's only one disk
+  if [ ${#AVAILABLE_DISKS[@]} -eq 1 ]; then
+      echo -e "${Success}Only one disk detected, selecting it by default (${Default}${DEFAULT_TARGET_DISK}${Success})${NC}"
+      TARGET_DISK=$DEFAULT_TARGET_DISK
+      return
+  fi
+  
+  while true; do
+      echo -e "${Heading}The following disks are available on your system${NC}"
+      # Display the list of available disks with indices
+      for i in "${!AVAILABLE_DISKS[@]}"; do
+          IFS=' ' read -r -a arr <<< "${AVAILABLE_DISKS[$i]}"
+          echo -e "${Success}$(printf "%2d. %-10s %-10s" $((i + 1)) "${arr[0]}" "${Default}${arr[1]}")${NC}"
+      done
+  
+      # Prompt the user for selection or use the default
+      echo -ne "${Prompt}Select a disk number (${Default}1${Prompt}): ${NC}"
+      read -r
+      if [[ -z $REPLY ]]; then
+          TARGET_DISK=$DEFAULT_TARGET_DISK
+          break
+      elif [[ $REPLY -ge 1 && $REPLY -le ${#AVAILABLE_DISKS[@]} ]]; then
+          IFS=' ' read -r -a arr <<< "${AVAILABLE_DISKS[$((REPLY - 1))]}"
+          TARGET_DISK=${arr[0]}
+          break
+      else
+          echo -e "${Error}Invalid selection${NC}"
+      fi
+  done
+}
 
-while true; do
-    echo -e "${Heading}The following disks are available on your system${NC}"
-    printf "%-10s %-10s\n" "Disk" "Size"
-    for disk in "${AVAILABLE_DISKS[@]}"; do
-        IFS=' ' read -r -a arr <<< "$disk"
-        printf "%-10s %-10s\n" "${arr[0]}" "${arr[1]}"
-    done
+select_settings() {
+  echo -e "${Heading}Configuration${NC}"
+  prompt_user "Enter the new hostname" HOSTNAME
+  prompt_user "Enter the new user" USERNAME
+  prompt_user "Enter your country" COUNTRY true
+  prompt_user "Enter your city" CITY true
+  prompt_user "Enter your locale" LOCALE
+  prompt_user "Enter the desired kernel" KERNEL
+  
+  # Use the correct variable name for the target disk
+  TIMEZONE="$COUNTRY/$CITY"
+  DISK="/dev/$TARGET_DISK"
+  CRYPT_NAME='crypt_lvm' # the name of the LUKS container.
+  LVM_NAME='lvm_arch' # the name of the logical volume.
+  LUKS_KEYS='/etc/luksKeys' # Where you will store the root partition key
+}
 
-    prompt_user "Enter the target disk" TARGET_DISK
-    
-    # Check if the selected disk is valid
-    is_valid=false
-    for available_disk in "${AVAILABLE_DISKS[@]}"; do
-        if [[ "$available_disk" == *"$TARGET_DISK"* ]]; then
-            is_valid=true
-            break
-        fi
-    done
+# Begin
+echo -e "${Title}Arch Linux installer${NC}"
 
-    if $is_valid; then
-        break
-    else
-        echo -e "${Error}Invalid disk${NC}"
-    fi
-done
+# Execution order
+check_root
+check_uefi
 
-# Setup username and hostname
-echo -e "${Heading}Choosing a hostname and username${NC}"
-prompt_user "Enter the new hostname" HOSTNAME
-prompt_user "Enter the new user" USERNAME
-
-# Setup region
-echo -e "${Heading}Set your region information${NC}"
-prompt_user "Enter your country" COUNTRY true
-prompt_user "Enter your city" CITY true
-prompt_user "Enter your locale" LOCALE
-
-# Select your desired kernel
-echo -e "${Heading}Set your kernel${NC}"
-prompt_user "Enter the desired kernel" KERNEL
-
-# Use the correct variable name for the target disk
-TIMEZONE="$COUNTRY/$CITY"
-DISK="/dev/$TARGET_DISK"
-CRYPT_NAME='crypt_lvm' # the name of the LUKS container.
-LVM_NAME='lvm_arch' # the name of the logical volume.
-LUKS_KEYS='/etc/luksKeys' # Where you will store the root partition key
+select_disk
+select_settings
 
 # Check if settings are correct
-echo -e "${Heading}Confirm Settings${NC}"
-echo -e "${Prompt}Country: ${Default}${COUNTRY}${NC}"
-echo -e "${Prompt}City: ${Default}${CITY}${NC}"
-echo -e "${Prompt}Locale: ${Default}${LOCALE}${NC}"
-echo -e "${Prompt}Disk: ${Default}${TARGET_DISK}${NC}"
-echo -e "${Prompt}Kernel: ${Default}${KERNEL}${NC}"
-echo -e "${Prompt}User: ${Default}${USERNAME}${NC}"
-echo -e "${Prompt}Host: ${Default}${HOSTNAME}${NC}"
+echo -e "${Heading}Confirm${NC}"
+
+echo -e "${Success}Disk: ${Default}${TARGET_DISK}${NC}"
+echo -e "${Success}Host: ${Default}${HOSTNAME}${NC}"
+echo -e "${Success}User: ${Default}${USERNAME}${NC}"
+echo -e "${Success}Country: ${Default}${COUNTRY}${NC}"
+echo -e "${Success}City: ${Default}${CITY}${NC}"
+echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
+echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
+
 prompt_continue
 
 # Setting time correctly before installation
