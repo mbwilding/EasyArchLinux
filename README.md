@@ -12,3 +12,12 @@ Then run;
 
     chmod +x *.sh
     ./install.sh
+
+### Editing defaults
+You can edit the defaults at the top of the file before running
+
+    nano install.sh
+
+### Switches
+Running ```./install.sh -d``` will install with defaults<br>
+If there are multiple disks detected, it will still prompt<br>

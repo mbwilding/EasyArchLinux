@@ -285,6 +285,7 @@ install() {
   echo -e "${Heading}Preparing the chroot script to be executed${NC}"
   cp ./chroot.sh /mnt
   CHROOT="/mnt/chroot.sh"
+  sed -i "s|^USE_DEFAULTS=.*|USE_DEFAULTS='${USE_DEFAULTS}'|g" $CHROOT
   sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
   sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
   sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT

@@ -10,6 +10,7 @@ Default='\033[0;35m'
 Title='\033[1;36m'
 
 # The below values will be changed by install.sh
+USE_DEFAULTS='<use_defaults>'
 DISK_PREFIX='<disk_prefix>'
 LVM_NAME='<lvm_name>'
 USERNAME='<username>'
@@ -32,13 +33,19 @@ ask_and_execute() {
   local question=$1
   local callback=$2
   
-  echo -ne "${Prompt}${question} (${Default}Enter${Prompt})${NC}"
-  read -rsn1 CONTINUE
-  if [ "$CONTINUE" != "" ]; then
-    echo -e "${Success}Executing${NC}"
+  if [ "$USE_DEFAULTS" == "1" ]; then
+    echo -e "${Success} | Using defaults${NC}"
     eval "${callback}"
   else
-    echo -e "${Success}Skipping${NC}"
+    echo -ne "${Prompt}${question} (${Default}Enter${Prompt})${NC}"
+    read -rsn1 CONTINUE
+    if [ "$CONTINUE" != $'\n' ]; then
+      echo -e "${Success} | Executing${NC}"
+      eval "${callback}"
+    else
+      echo -e "${Success} | Skipping${NC}"
+      CONTINUE=""
+    fi
   fi
 }
 
