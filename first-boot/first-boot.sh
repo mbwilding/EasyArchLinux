@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# shellcheck disable=SC2164
+cd /tmp
+
 setup_pamac() {
   # Clone and install
   git clone https://aur.archlinux.org/libpamac-aur.git && (cd libpamac-aur && makepkg -si --noconfirm)
@@ -7,6 +10,8 @@ setup_pamac() {
   
   # Enable AUR support in Pamac
   sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
+  
+  # Enable updates in Pamac
   sudo sed -i 's/#CheckAURUpdates/CheckAURUpdates/' /etc/pamac.conf
 }
 
