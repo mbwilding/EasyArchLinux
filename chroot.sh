@@ -237,6 +237,5 @@ echo -e "${Blue}Setting root password...${NC}"
 passwd
 
 # Finished
-echo -e "${Blue}Installation completed!${NC}"
-rm /chroot.sh
+echo -e "${Blue}Chroot script completed!${NC}"
 exit

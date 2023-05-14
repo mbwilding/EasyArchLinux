@@ -13,9 +13,9 @@ NC='\033[0m' # No Color
 Prompt='\033[1;34m'
 Error='\033[1;31m'
 Success='\033[1;32m'
-Default='\033[0;35m'
 Heading='\033[1;33m'
 Standard='\033[0;37m'
+Default='\033[0;35m'
 
 # Helper functions
 prompt_user() {
@@ -24,7 +24,7 @@ prompt_user() {
     local capitalize=$3
     local default_var_name="DEFAULT_${var_name^^}"
 
-    echo -ne "${Prompt}${prompt} (${!default_var_name}): ${NC}"
+    echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
     read -r response
     if [ "$capitalize" = true ]; then
         response=$(capitalize_first_letter "$response")
@@ -47,6 +47,7 @@ capitalize_first_letter() {
   if [ -z "$input_string" ]; then
     echo ""
   else
+    input_string=$(echo "$input_string" | tr '[:upper:]' '[:lower:]')
     first_letter=$(echo "${input_string:0:1}" | tr '[:lower:]' '[:upper:]')
     rest_of_string="${input_string:1}"
     echo "$first_letter$rest_of_string"
@@ -67,6 +68,7 @@ fi
 
 # Select a disk to install to
 readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
+# shellcheck disable=SC2034
 DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
 
 while true; do
@@ -95,14 +97,14 @@ while true; do
     fi
 done
 
-# Setup username and host
+# Setup username and hostname
 echo -e "${Heading}Choosing a hostname and username${NC}"
 prompt_user "Enter the new hostname" HOSTNAME
 prompt_user "Enter the new user" USERNAME
 
 # Setup region
 echo -e "${Heading}Set your region information${NC}"
-prompt_user "Enter your country" COUNTRY
+prompt_user "Enter your country" COUNTRY true
 prompt_user "Enter your city" CITY true
 prompt_user "Enter your locale" LOCALE
 
@@ -119,16 +121,14 @@ LUKS_KEYS='/etc/luksKeys' # Where you will store the root partition key
 
 # Check if settings are correct
 echo -e "${Heading}Confirm Settings${NC}"
-echo "Country: ${COUNTRY}"
-echo "City: ${CITY}"
-echo "Locale: ${LOCALE}"
-echo "Disk: ${TARGET_DISK}"
-echo "Kernel: ${KERNEL}"
-echo "User: ${USERNAME}"
-echo "Host: ${HOSTNAME}"
+echo -e "${Prompt}Country: ${Default}${COUNTRY}${NC}"
+echo -e "${Prompt}City: ${Default}${CITY}${NC}"
+echo -e "${Prompt}Locale: ${Default}${LOCALE}${NC}"
+echo -e "${Prompt}Disk: ${Default}${TARGET_DISK}${NC}"
+echo -e "${Prompt}Kernel: ${Default}${KERNEL}${NC}"
+echo -e "${Prompt}User: ${Default}${USERNAME}${NC}"
+echo -e "${Prompt}Host: ${Default}${HOSTNAME}${NC}"
 prompt_continue
-
-exit 1
 
 # Setting time correctly before installation
 timedatectl set-ntp true
@@ -248,6 +248,7 @@ chmod +x $CHROOT
 # Chroot into new system and configure it 
 echo -e "${Standard}Chrooting into new system and configuring it${NC}"
 arch-chroot /mnt /bin/bash ./chroot.sh
+rm /mnt/chroot.sh
 
 # Finished
 read -rp "${Prompt}Do you want to reboot now? (Press Enter to continue, type 'n' to skip): ${NC}" REBOOT
