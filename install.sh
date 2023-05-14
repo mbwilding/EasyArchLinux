@@ -21,6 +21,13 @@ Prompt='\033[1;34m'
 Default='\033[0;35m'
 Title='\033[1;36m'
 
+# Use defaults switch (-d)
+USE_DEFAULTS=0
+if [[ $1 == "-d" ]]; then
+  # If -d flag is present, use default values
+  USE_DEFAULTS=1
+fi
+
 # Title
 echo -e "${Title}Arch Linux (Install)${NC}"
 
@@ -30,31 +37,38 @@ prompt_user() {
     local var_name=$2
     local capitalize=$3
     local default_var_name="DEFAULT_${var_name^^}"
+    local response
 
-    while true; do
-        echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
-        read -r response
-        if [[ $response = *[[:space:]]* ]]; then
-            echo -e "${Error}Please do not include spaces${NC}"
-        else
-            break
-        fi
-    done
+    if (( USE_DEFAULTS == 1 )); then
+        response=${!default_var_name}
+    else
+        while true; do
+            echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
+            read -r response
+            if [[ $response = *[[:space:]]* ]]; then
+                echo -e "${Error}Please do not include spaces${NC}"
+            else
+                break
+            fi
+        done
+    fi
 
     if [ "$capitalize" = true ]; then
         response=$(capitalize_first_letter "$response")
     fi
+    
     eval $var_name=${response:-${!default_var_name}}
 }
 
 prompt_continue() {
-    echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
-    read -rsn1 CONTINUE
-    if [ "$CONTINUE" != "" ]; then
-      echo -e "\n${Error}Aborted${NC}"
-      exit 1
+    if (( USE_DEFAULTS == 0 )); then
+        echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
+        read -rsn1 CONTINUE
+        if [ "$CONTINUE" != "" ]; then
+          echo -e "\n${Error}Aborted${NC}"
+          exit 1
+        fi
     fi
-    echo
 }
 
 capitalize_first_letter() {
