@@ -57,7 +57,7 @@ setup_pamac() {
   # Get dependencies
   pacman -S --needed git base-devel --noconfirm
   
-  echo "${USER_PASSWORD}" | sudo -S -u ${USERNAME} bash -c '
+  echo "$USER_PASSWORD" | sudo -S -u $USERNAME bash -c '
       git clone https://aur.archlinux.org/libpamac-aur.git &&
       (cd libpamac-aur && makepkg -si) &&
       git clone https://aur.archlinux.org/pamac-aur.git &&
@@ -116,9 +116,9 @@ install() {
   append_sudoers "%sudo ALL=(ALL) ALL"
   
   # add a user
-  echo -e "${Heading}Adding the user '${USERNAME}'${NC}"
-  groupadd ${USERNAME}
-  useradd -g ${USERNAME} -G sudo,wheel,audio,video,optical -s /bin/bash -m ${USERNAME}
+  echo -e "${Heading}Adding the user '$USERNAME'${NC}"
+  groupadd $USERNAME
+  useradd -g $USERNAME -G sudo,wheel,audio,video,optical -s /bin/bash -m $USERNAME
   
   # Set user password
   echo -e "${Heading}Setting user password${NC}"
@@ -128,12 +128,12 @@ install() {
   echo -e "${Heading}Setting root password${NC}"
   echo "root:${ROOT_PASSWORD}" | chpasswd
   
-  echo -e "${Heading}Setting up /home and .ssh/ of the user '${USERNAME}'${NC}"
-  mkdir /home/${USERNAME}/.ssh
-  touch /home/${USERNAME}/.ssh/authorized_keys
-  chmod 700 /home/${USERNAME}/.ssh
-  chmod 600 /home/${USERNAME}/.ssh/authorized_keys
-  chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+  echo -e "${Heading}Setting up /home and .ssh/ of the user '$USERNAME'${NC}"
+  mkdir /home/$USERNAME/.ssh
+  touch /home/$USERNAME/.ssh/authorized_keys
+  chmod 700 /home/$USERNAME/.ssh
+  chmod 600 /home/$USERNAME/.ssh/authorized_keys
+  chown -R $USERNAME:$USERNAME /home/$USERNAME
   
   # Set default ACLs on home directory 
   echo -e "${Heading}Setting default ACLs on home directory${NC}"
@@ -208,21 +208,21 @@ install() {
   echo -e "${Heading}Adjusting /etc/mkinitcpio.conf for encryption...${NC}"
   sed -i "s|^HOOKS=.*|HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)|g" /etc/mkinitcpio.conf
   sed -i "s|^FILES=.*|FILES=(${LUKS_KEYS})|g" /etc/mkinitcpio.conf
-  mkinitcpio -p "${KERNEL}"
+  mkinitcpio -p "$KERNEL"
   
   echo -e "${Heading}Adjusting etc/default/grub for encryption...${NC}"
   sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
   
   echo -e "${Heading}Hardening GRUB and Kernel boot options...${NC}"
   GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
-  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:${LUKS_KEYS}\""
+  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
   sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
   sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${GRUBCMD}|g" /etc/default/grub
   
   echo -e "${Heading}Setting up GRUB${NC}"
   grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
   grub-mkconfig -o /boot/grub/grub.cfg
-  chmod 600 ${LUKS_KEYS}
+  chmod 600 $LUKS_KEYS
   
   echo -e "${Heading}Setting permission on config files${NC}"
   
