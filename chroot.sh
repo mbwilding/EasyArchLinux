@@ -35,7 +35,7 @@ setup_swap() {
   pacman -S systemd-swap --noconfirm
   echo 'swapfc_enabled=1' >> /etc/systemd/swap.conf
   systemctl enable systemd-swap
-  echo "Dynamic swap setup complete."
+  echo "Dynamic swap setup complete"
 }
 
 setup_pamac() {
@@ -53,7 +53,7 @@ setup_pamac() {
   sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
   sudo sed -i 's/#CheckAURUpdates/CheckAURUpdates/' /etc/pamac.conf
   
-  echo "Pamac setup complete."
+  echo "Pamac setup complete"
 }
 
 setup_kde() {
@@ -61,7 +61,7 @@ setup_kde() {
   pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
   systemctl enable sddm
 
-  echo "KDE Plasma setup complete."
+  echo "KDE Plasma setup complete"
 }
 
 LUKS_KEYS='/etc/luksKeys/boot.key' # Where you will store the root partition key
@@ -72,19 +72,19 @@ pacman-key --init
 pacman-key --populate archlinux
 
 # Set the timezone
-echo -e "${Blue}Setting the timezone...${NC}"
+echo -e "${Blue}Setting the timezone${NC}"
 ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 hwclock --systohc --utc
 
 # Set up locale
-echo -e "${Blue}Setting up locale...${NC}"
+echo -e "${Blue}Setting the locale${NC}"
 sed -i "/#${LOCALE}.UTF-8/s/^#//g" /etc/locale.gen
 locale-gen
 echo "LANG=${LOCALE}.UTF-8" > /etc/locale.conf
 export LANG=${LOCALE}.UTF-8
 
 # Set hostname
-echo -e "${Blue}Setting hostname...${NC}"
+echo -e "${Blue}Setting hostname${NC}"
 echo "$HOSTNAME" > /etc/hostname
 echo "127.0.0.1 localhost localhost.localdomain $HOSTNAME.localdomain $HOSTNAME" > /etc/hosts
 
@@ -93,10 +93,10 @@ echo "ALL: LOCAL, 127.0.0.1" >> /etc/hosts.allow
 echo "ALL: ALL" > /etc/hosts.deny
 
 # Enable and configure necessary services
-echo -e "${Blue}Enabling NetworkManager...${NC}"
+echo -e "${Blue}Enabling NetworkManager${NC}"
 systemctl enable NetworkManager
 
-echo -e "${Blue}Enabling OpenSSH...${NC}"
+echo -e "${Blue}Enabling OpenSSH${NC}"
 systemctl enable sshd
 
 # Create a group for sudo
@@ -104,12 +104,12 @@ groupadd sudo
 append_sudoers "%sudo ALL=(ALL) ALL"
 
 # add a user
-echo -e "${Blue}Adding the user $USERNAME...${NC}"
+echo -e "${Blue}Adding the user '$USERNAME$'{NC}"
 groupadd $USERNAME
 useradd -g $USERNAME -G sudo,wheel,audio,video,optical -s /bin/bash -m $USERNAME
 passwd $USERNAME
 
-echo -e "${Blue}Setting up /home and .ssh/ of the user $USERNAME...${NC}"
+echo -e "${Blue}Setting up /home and .ssh/ of the user '$USERNAME$'{NC}"
 mkdir /home/$USERNAME/.ssh
 touch /home/$USERNAME/.ssh/authorized_keys
 chmod 700 /home/$USERNAME/.ssh
@@ -123,7 +123,7 @@ setfacl -d -m u::rwx,g::---,o::--- ~
 # Update Arch
 pacman -Syu --noconfirm
 
-echo -e "${Blue}Installing CPU ucode...${NC}"
+echo -e "${Blue}Installing CPU ucode${NC}"
 # Use grep to check if the string 'Intel' is present in the CPU info
 if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
     pacman -S intel-ucode --noconfirm
@@ -133,30 +133,30 @@ elif
     pacman -S amd-ucode --noconfirm
 else
     # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
-    echo "This is an unknown CPU."
+    echo "This is an unknown CPU"
 fi
 
 # Setup extras
-ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap "Dynamic swap setup."
-ask_and_execute "Install Pamac from the AUR?" setup_pamac "Pamac setup."
-ask_and_execute "Install KDE Plasma?" setup_kde "KDE Plasma setup."
+ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap "Dynamic swap setup"
+ask_and_execute "Install Pamac from the AUR?" setup_pamac "Pamac setup"
+ask_and_execute "Install KDE Plasma?" setup_kde "KDE Plasma setup"
 
 # Configure sudo
-echo -e "${Blue}Hardening sudo...${NC}"
+echo -e "${Blue}Hardening sudo${NC}"
 
-# Set the secure path for sudo.
+# Set the secure path for sudo
 append_sudoers "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
 
-# Disable the ability to run commands with root password.
+# Disable the ability to run commands with root password
 append_sudoers "Defaults !rootpw"
 
-# Set the default umask for sudo.
+# Set the default umask for sudo
 append_sudoers "Defaults umask=077"
 
-# Set the default editor for sudo.
+# Set the default editor for sudo
 append_sudoers "Defaults editor=/usr/bin/nano"
 
-# Set the default environment variables for sudo.
+# Set the default environment variables for sudo
 append_sudoers "Defaults env_reset"
 append_sudoers "Defaults env_reset,env_keep=\"COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS\""
 append_sudoers "Defaults env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\""
