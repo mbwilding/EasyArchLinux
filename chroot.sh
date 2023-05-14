@@ -4,6 +4,15 @@
 NC='\033[0m'
 Blue='\033[1;34m'
 
+# The below values will be changed by install.sh
+DISK_PREFIX='<disk_prefix>'
+LVM_NAME='<lvm_name>'
+USERNAME='<username>'
+HOSTNAME='<hostname>'
+LOCALE='<locale>'
+TIMEZONE='<timezone>'
+KERNEL='<kernel>'
+
 # Helper functions
 append_sudoers() {
   echo "$1" | tee -a /etc/sudoers > /dev/null
@@ -30,9 +39,6 @@ setup_swap() {
 }
 
 setup_pamac() {
-  # Update Arch
-  pacman -Syu --noconfirm
-  
   # Get dependencies
   pacman -S --needed git base-devel --noconfirm
   
@@ -57,15 +63,6 @@ setup_kde() {
 
   echo "KDE Plasma setup complete."
 }
-
-# The below values will be changed by ArchInstall.sh
-DISK_PREFIX='<your_target_disk>'
-LVM_NAME='lvm_arch'
-USERNAME='<user_name_goes_here>'
-HOSTNAME='<hostname_goes_here>'
-LOCALE='<locale_goes_here>'
-TIMEZONE='<timezone_goes_here>'
-KERNEL='<kernel_goes_here>'
 
 LUKS_KEYS='/etc/luksKeys/boot.key' # Where you will store the root partition key
 UUID=$(cryptsetup luksDump "$DISK_PREFIX"3 | grep UUID | awk '{print $2}')
@@ -123,6 +120,22 @@ chown -R $USERNAME:$USERNAME /home/$USERNAME
 echo -e "${Blue}Setting default ACLs on home directory${NC}"
 setfacl -d -m u::rwx,g::---,o::--- ~
 
+# Update Arch
+pacman -Syu --noconfirm
+
+echo -e "${Blue}Installing CPU ucode...${NC}"
+# Use grep to check if the string 'Intel' is present in the CPU info
+if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
+    pacman -S intel-ucode --noconfirm
+elif
+    # If the string 'Intel' is not present, check if the string 'AMD' is present
+    [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]; then
+    pacman -S amd-ucode --noconfirm
+else
+    # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
+    echo "This is an unknown CPU."
+fi
+
 # Setup extras
 ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap "Dynamic swap setup."
 ask_and_execute "Install Pamac from the AUR?" setup_pamac "Pamac setup."
@@ -169,7 +182,7 @@ append_sudoers "@includedir /etc/sudoers.d"
 
 # Set permissions for /etc/sudoers
 echo -e "${Blue}Setting permissions for /etc/sudoers${NC}"
-chmod 440 /etc/sudoers 
+chmod 440 /etc/sudoers
 chown root:root /etc/sudoers
 
 # GRUB hardening setup and encryption
@@ -182,15 +195,6 @@ echo -e "${Blue}Adjusting etc/default/grub for encryption...${NC}"
 sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
 
 echo -e "${Blue}Hardening GRUB and Kernel boot options...${NC}"
-
-# GRUBSEC Hardening explanation:
-# slab_nomerge: This disables slab merging, which significantly increases the difficulty of heap exploitation
-# init_on_alloc=1 init_on_free=1: enables zeroing of memory during allocation and free time, which can help mitigate use-after-free vulnerabilities and erase sensitive information in memory.
-# page_alloc.shuffle=1: randomises page allocator freelists, improving security by making page allocations less predictable. This also improves performance.
-# pti=on: enables Kernel Page Table Isolation, which mitigates Meltdown and prevents some KASLR bypasses.
-# randomize_kstack_offset=on:  randomises the kernel stack offset on each syscall, which makes attacks that rely on deterministic kernel stack layout significantly more difficult
-# vsyscall=none: disables vsyscalls, as they are obsolete and have been replaced with vDSO. vsyscalls are also at fixed addresses in memory, making them a potential target for ROP attacks.
-# lockdown=confidentiality: eliminate many methods that user space code could abuse to escalate to kernel privileges and extract sensitive information.
 GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
 GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
 sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
@@ -200,19 +204,6 @@ echo -e "${Blue}Setting up GRUB...${NC}"
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 chmod 600 $LUKS_KEYS
-
-echo -e "${Blue}Installing CPU ucode...${NC}"
-# Use grep to check if the string 'Intel' is present in the CPU info
-if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
-    pacman -S intel-ucode --noconfirm
-elif
-    # If the string 'Intel' is not present, check if the string 'AMD' is present
-    [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]; then
-    pacman -S amd-ucode --noconfirm
-else
-    # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
-    echo "This is an unknown CPU."
-fi
 
 echo -e "${Blue}Setting permission on config files...${NC}"
 

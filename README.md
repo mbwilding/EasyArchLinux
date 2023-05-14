@@ -9,5 +9,6 @@ Then run;
     for file in install chroot
     do curl -O https://raw.githubusercontent.com/mbwilding/ArchLinux/main/${file}.sh
     done
+
     chmod +x *.sh
     ./install.sh
