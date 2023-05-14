@@ -26,6 +26,7 @@ USE_DEFAULTS=0
 if [[ $1 == "-d" ]]; then
   # If -d flag is present, use default values
   USE_DEFAULTS=1
+  echo -e "${Error}Using defaults${NC}"
 fi
 
 # Title
