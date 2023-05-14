@@ -34,16 +34,13 @@ ask_and_execute() {
   local callback=$2
   
   if [ "$USE_DEFAULTS" == "1" ]; then
-    echo -e "${Success} | Using defaults${NC}"
     eval "${callback}"
   else
     echo -ne "${Prompt}${question} (${Default}Enter${Prompt})${NC}"
     read -rsn1 CONTINUE
     if [ "$CONTINUE" != $'\n' ]; then
-      echo -e "${Success} | Executing${NC}"
       eval "${callback}"
     else
-      echo -e "${Success} | Skipping${NC}"
       CONTINUE=""
     fi
   fi

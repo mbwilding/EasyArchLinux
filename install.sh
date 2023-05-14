@@ -65,8 +65,9 @@ prompt_continue() {
     if (( USE_DEFAULTS == 0 )); then
         echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
         read -rsn1 CONTINUE
+        echo
         if [ "$CONTINUE" != "" ]; then
-          echo -e "\n${Error}Aborted${NC}"
+          echo -e "${Error}Aborted${NC}"
           exit 1
         fi
     fi
@@ -213,13 +214,8 @@ install() {
       DISK_PREFIX="${DISK}"
   fi
   
-  # Encrypts with the best key size. (INPUT)
+  # Encrypts with the best key size
   echo -n "${VOLUME_PASSWORD}" | cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random luksFormat --type luks1 "$DISK_PREFIX"3 -
-  
-  # Opening LUKS container to test
-  echo -e "${Heading}Opening the LUKS container to test password${NC}"
-  echo -n "${VOLUME_PASSWORD}" | cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME -
-  cryptsetup -v luksClose $CRYPT_NAME
   
   # create a LUKS key of size 2048 and save it as boot.key
   echo -e "${Heading}Creating the LUKS key for '$CRYPT_NAME'${NC}"
@@ -247,7 +243,7 @@ install() {
   mkdir --verbose /mnt/home
   mkdir --verbose -p /mnt/tmp
   
-  # Mount efi
+  # Mount EFI
   echo -e "${Heading}Preparing the EFI partition${NC}"
   mkfs.vfat -F32 "$DISK_PREFIX"2
   mkdir --verbose /mnt/efi
