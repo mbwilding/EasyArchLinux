@@ -66,7 +66,7 @@ prompt_continue() {
         echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
         read -rsn1 CONTINUE
         echo
-        if [ "${CONTINUE}" != "" ]; then
+        if [ "$CONTINUE" != "" ]; then
           echo -e "${Error}Aborted${NC}"
           exit 1
         fi
