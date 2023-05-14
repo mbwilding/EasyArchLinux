@@ -190,9 +190,7 @@ install() {
   fi
   
   # Encrypts with the best key size. (Will prompt for a password)
-  echo -e "${Prompt}"
   cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random  luksFormat --type luks1 "$DISK_PREFIX"3
-  echo -e "${NC}"
   
   # Opening LUKS container to test
   echo -e "${Heading}Opening the LUKS container to test password${NC}"
