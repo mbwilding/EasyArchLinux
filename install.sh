@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Default Settings
+# shellcheck disable=SC2034
 DEFAULT_HOSTNAME="arch"
 DEFAULT_USERNAME="user"
 DEFAULT_COUNTRY="Australia"
@@ -68,7 +69,6 @@ fi
 
 # Select a disk to install to
 readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
-# shellcheck disable=SC2034
 DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
 
 while true; do
