@@ -1,7 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 
 # Default Settings
-# shellcheck disable=SC2034
 DEFAULT_HOSTNAME="arch"
 DEFAULT_USERNAME="user"
 DEFAULT_COUNTRY="Australia"
@@ -18,6 +18,9 @@ Prompt='\033[1;34m'
 Default='\033[0;35m'
 Title='\033[1;36m'
 Standard='\033[0;37m'
+
+# Title
+echo -e "${Title}Arch Linux installer${NC}"
 
 # Helper functions
 prompt_user() {
@@ -137,154 +140,157 @@ select_settings() {
   LUKS_KEYS='/etc/luksKeys' # Where you will store the root partition key
 }
 
-# Begin
-echo -e "${Title}Arch Linux installer${NC}"
+confirm_settings() {
+  echo -e "${Heading}Confirm${NC}"
+  
+  echo -e "${Success}Disk: ${Default}${TARGET_DISK}${NC}"
+  echo -e "${Success}Host: ${Default}${HOSTNAME}${NC}"
+  echo -e "${Success}User: ${Default}${USERNAME}${NC}"
+  echo -e "${Success}Country: ${Default}${COUNTRY}${NC}"
+  echo -e "${Success}City: ${Default}${CITY}${NC}"
+  echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
+  echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
+  
+  prompt_continue
+}
+
+install() {
+  # Setting time correctly before installation
+  timedatectl set-ntp true
+  
+  # Wipe out partitions
+  echo -e "${Standard}Wiping all partitions on disk '$DISK'${NC}"
+  sgdisk -Z "$DISK"
+  
+  # Partition the disk
+  echo -e "${Standard}Preparing disk '$DISK' for UEFI and Encryption${NC}"
+  sgdisk -og "$DISK"
+  
+  # Create a 1MiB BIOS boot partition
+  echo -e "${Standard}Creating a 1MiB BIOS boot partition${NC}"
+  sgdisk -n 1:2048:4095 -t 1:ef02 -c 1:"BIOS boot Partition" "$DISK"
+  
+  # Create a UEFI partition
+  echo -e "${Standard}Creating a UEFI partition${NC}"
+  sgdisk -n 2:4096:1130495 -t 2:ef00 -c 2:"EFI" "$DISK"
+  
+  # Create a LUKS partition
+  echo -e "${Standard}Creating a LUKS partition${NC}"
+  sgdisk -n 3:1130496:"$(sgdisk -E "$DISK")" -t 3:8309 -c 3:"Linux LUKS" "$DISK"
+  
+  # Create the LUKS container
+  echo -e "${Standard}Creating the LUKS container${NC}"
+  
+  # Set partition variable, handles nvme partitioning case
+  if [[ $DISK == /dev/nvme* ]]; then
+      DISK_PREFIX="${DISK}p"
+  else
+      DISK_PREFIX="${DISK}"
+  fi
+  
+  # Encrypts with the best key size. (Will prompt for a password)
+  cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random  luksFormat --type luks1 "$DISK_PREFIX"3
+  
+  # Opening LUKS container to test
+  echo -e "${Standard}Opening the LUKS container to test password${NC}"
+  cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME
+  cryptsetup -v luksClose $CRYPT_NAME
+  
+  # create a LUKS key of size 2048 and save it as boot.key
+  echo -e "${Standard}Creating the LUKS key for '$CRYPT_NAME'${NC}"
+  dd if=/dev/urandom of=./boot.key bs=2048 count=1
+  cryptsetup -v luksAddKey -i 1 "$DISK_PREFIX"3 ./boot.key
+  
+  # unlock LUKS container with the boot.key file
+  echo -e "${Standard}Testing the LUKS keys for '$CRYPT_NAME'${NC}"
+  cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME --key-file ./boot.key
+  echo -e "\n"
+  
+  # Create the LVM physical volume, volume group and logical volume
+  echo -e "${Standard}Creating LVM logical volumes on '$LVM_NAME'${NC}"
+  pvcreate --verbose /dev/mapper/$CRYPT_NAME
+  vgcreate --verbose $LVM_NAME /dev/mapper/$CRYPT_NAME
+  lvcreate --verbose -l 100%FREE $LVM_NAME -n root
+  
+  # Format the partitions 
+  echo -e "${Standard}Formatting filesystems${NC}"
+  mkfs.ext4 /dev/mapper/$LVM_NAME-root
+  
+  # Mount filesystem
+  echo -e "${Standard}Mounting filesystems${NC}"
+  mount --verbose /dev/mapper/$LVM_NAME-root /mnt
+  mkdir --verbose /mnt/home
+  mkdir --verbose -p /mnt/tmp
+  
+  # Mount efi
+  echo -e "${Standard}Preparing the EFI partition${NC}"
+  mkfs.vfat -F32 "$DISK_PREFIX"2
+  mkdir --verbose /mnt/efi
+  mount --verbose "$DISK_PREFIX"2 /mnt/efi
+  
+  # Update the keyring for the packages
+  echo -e "${Standard}Updating Arch key-rings${NC}" 
+  pacman -Sy archlinux-keyring --noconfirm
+  
+  # Install Arch Linux base system. Add or remove packages as you wish.
+  echo -e "${Standard}Installing Arch Linux base system${NC}" 
+  pacstrap -i /mnt base base-devel archlinux-keyring "$KERNEL" "$KERNEL"-headers \
+                   linux-firmware lvm2 grub efibootmgr dosfstools os-prober mtools \
+                   networkmanager wget curl git nano openssh unzip unrar p7zip neofetch zsh \
+                   zip unarj arj cabextract xz pbzip2 pixz lrzip cpio gdisk go rsync sudo
+  
+  # Generate fstab file
+  echo -e "${Standard}Generating fstab file${NC}" 
+  genfstab -pU /mnt >> /mnt/etc/fstab
+  
+  echo -e "${Standard}Copying the '$CRYPT_NAME' key to '$LUKS_KEYS'${NC}" 
+  mkdir --verbose /mnt$LUKS_KEYS
+  cp ./boot.key /mnt$LUKS_KEYS/boot.key
+  rm ./boot.key
+  
+  # Add an entry to fstab so the new mountpoint will be mounted on boot
+  echo -e "${Standard}Adding tmpfs to fstab${NC}" 
+  echo "tmpfs /tmp tmpfs rw,nosuid,nodev,noexec,relatime,size=2G 0 0" >> /mnt/etc/fstab
+  echo -e "${Standard}Adding proc to fstab and hardening it${NC}" 
+  echo "proc /proc proc nosuid,nodev,noexec,hidepid=2,gid=proc 0 0" >> /etc/fstab
+  touch /etc/systemd/system/systemd-logind.service.d/hidepid.conf
+  echo "[Service]" >> /etc/systemd/system/systemd-logind.service.d/hidepid.conf
+  echo "SupplementaryGroups=proc" >> /etc/systemd/system/systemd-logind.service.d/hidepid.conf
+  
+  # Preparing the chroot script to be executed
+  echo -e "${Standard}Preparing the chroot script to be executed${NC}"
+  cp ./chroot.sh /mnt
+  CHROOT="/mnt/chroot.sh"
+  sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
+  sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
+  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
+  sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT
+  sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
+  sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
+  sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT
+  chmod +x $CHROOT
+  
+  # Chroot into new system and configure it 
+  echo -e "${Standard}Chrooting into new system and configuring it${NC}"
+  arch-chroot /mnt /bin/bash ./chroot.sh
+  rm /mnt/chroot.sh
+}
+
+finish() {
+  read -rp "${Prompt}Do you want to reboot now? (Press Enter to continue, type 'n' to skip): ${NC}" REBOOT
+  if [[ -z "${REBOOT,,}" ]]; then
+      echo -e "${Success}Rebooting now${NC}"
+      reboot
+  else
+      echo -e "${Success}Skipping reboot${NC}"
+  fi
+}
 
 # Execution order
 check_root
 check_uefi
-
 select_disk
 select_settings
-
-# Check if settings are correct
-echo -e "${Heading}Confirm${NC}"
-
-echo -e "${Success}Disk: ${Default}${TARGET_DISK}${NC}"
-echo -e "${Success}Host: ${Default}${HOSTNAME}${NC}"
-echo -e "${Success}User: ${Default}${USERNAME}${NC}"
-echo -e "${Success}Country: ${Default}${COUNTRY}${NC}"
-echo -e "${Success}City: ${Default}${CITY}${NC}"
-echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
-echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
-
-prompt_continue
-
-# Setting time correctly before installation
-timedatectl set-ntp true
-
-# Wipe out partitions
-echo -e "${Standard}Wiping all partitions on disk '$DISK'${NC}"
-sgdisk -Z "$DISK"
-
-# Partition the disk
-echo -e "${Standard}Preparing disk '$DISK' for UEFI and Encryption${NC}"
-sgdisk -og "$DISK"
-
-# Create a 1MiB BIOS boot partition
-echo -e "${Standard}Creating a 1MiB BIOS boot partition${NC}"
-sgdisk -n 1:2048:4095 -t 1:ef02 -c 1:"BIOS boot Partition" "$DISK"
-
-# Create a UEFI partition
-echo -e "${Standard}Creating a UEFI partition${NC}"
-sgdisk -n 2:4096:1130495 -t 2:ef00 -c 2:"EFI" "$DISK"
-
-# Create a LUKS partition
-echo -e "${Standard}Creating a LUKS partition${NC}"
-sgdisk -n 3:1130496:"$(sgdisk -E "$DISK")" -t 3:8309 -c 3:"Linux LUKS" "$DISK"
-
-# Create the LUKS container
-echo -e "${Standard}Creating the LUKS container${NC}"
-
-# Set partition variable, handles nvme partitioning case
-if [[ $DISK == /dev/nvme* ]]; then
-    DISK_PREFIX="${DISK}p"
-else
-    DISK_PREFIX="${DISK}"
-fi
-
-# Encrypts with the best key size. (Will prompt for a password)
-cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random  luksFormat --type luks1 "$DISK_PREFIX"3
-
-# Opening LUKS container to test
-echo -e "${Standard}Opening the LUKS container to test password${NC}"
-cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME
-cryptsetup -v luksClose $CRYPT_NAME
-
-# create a LUKS key of size 2048 and save it as boot.key
-echo -e "${Standard}Creating the LUKS key for '$CRYPT_NAME'${NC}"
-dd if=/dev/urandom of=./boot.key bs=2048 count=1
-cryptsetup -v luksAddKey -i 1 "$DISK_PREFIX"3 ./boot.key
-
-# unlock LUKS container with the boot.key file
-echo -e "${Standard}Testing the LUKS keys for '$CRYPT_NAME'${NC}"
-cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME --key-file ./boot.key
-echo -e "\n"
-
-# Create the LVM physical volume, volume group and logical volume
-echo -e "${Standard}Creating LVM logical volumes on '$LVM_NAME'${NC}"
-pvcreate --verbose /dev/mapper/$CRYPT_NAME
-vgcreate --verbose $LVM_NAME /dev/mapper/$CRYPT_NAME
-lvcreate --verbose -l 100%FREE $LVM_NAME -n root
-
-# Format the partitions 
-echo -e "${Standard}Formatting filesystems${NC}"
-mkfs.ext4 /dev/mapper/$LVM_NAME-root
-
-# Mount filesystem
-echo -e "${Standard}Mounting filesystems${NC}"
-mount --verbose /dev/mapper/$LVM_NAME-root /mnt
-mkdir --verbose /mnt/home
-mkdir --verbose -p /mnt/tmp
-
-# Mount efi
-echo -e "${Standard}Preparing the EFI partition${NC}"
-mkfs.vfat -F32 "$DISK_PREFIX"2
-mkdir --verbose /mnt/efi
-mount --verbose "$DISK_PREFIX"2 /mnt/efi
-
-# Update the keyring for the packages
-echo -e "${Standard}Updating Arch key-rings${NC}" 
-pacman -Sy archlinux-keyring --noconfirm
-
-# Install Arch Linux base system. Add or remove packages as you wish.
-echo -e "${Standard}Installing Arch Linux base system${NC}" 
-pacstrap -i /mnt base base-devel archlinux-keyring "$KERNEL" "$KERNEL"-headers \
-                 linux-firmware lvm2 grub efibootmgr dosfstools os-prober mtools \
-                 networkmanager wget curl git nano openssh unzip unrar p7zip neofetch zsh \
-                 zip unarj arj cabextract xz pbzip2 pixz lrzip cpio gdisk go rsync sudo
-
-# Generate fstab file
-echo -e "${Standard}Generating fstab file${NC}" 
-genfstab -pU /mnt >> /mnt/etc/fstab
-
-echo -e "${Standard}Copying the '$CRYPT_NAME' key to '$LUKS_KEYS'${NC}" 
-mkdir --verbose /mnt$LUKS_KEYS
-cp ./boot.key /mnt$LUKS_KEYS/boot.key
-rm ./boot.key
-
-# Add an entry to fstab so the new mountpoint will be mounted on boot
-echo -e "${Standard}Adding tmpfs to fstab${NC}" 
-echo "tmpfs /tmp tmpfs rw,nosuid,nodev,noexec,relatime,size=2G 0 0" >> /mnt/etc/fstab
-echo -e "${Standard}Adding proc to fstab and hardening it${NC}" 
-echo "proc /proc proc nosuid,nodev,noexec,hidepid=2,gid=proc 0 0" >> /etc/fstab
-touch /etc/systemd/system/systemd-logind.service.d/hidepid.conf
-echo "[Service]" >> /etc/systemd/system/systemd-logind.service.d/hidepid.conf
-echo "SupplementaryGroups=proc" >> /etc/systemd/system/systemd-logind.service.d/hidepid.conf
-
-# Preparing the chroot script to be executed
-echo -e "${Standard}Preparing the chroot script to be executed${NC}"
-cp ./chroot.sh /mnt
-CHROOT="/mnt/chroot.sh"
-sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
-sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
-sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
-sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT
-sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
-sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
-sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT
-chmod +x $CHROOT
-
-# Chroot into new system and configure it 
-echo -e "${Standard}Chrooting into new system and configuring it${NC}"
-arch-chroot /mnt /bin/bash ./chroot.sh
-rm /mnt/chroot.sh
-
-# Finished
-read -rp "${Prompt}Do you want to reboot now? (Press Enter to continue, type 'n' to skip): ${NC}" REBOOT
-if [[ -z "${REBOOT,,}" ]]; then
-    echo -e "${Success}Rebooting now${NC}"
-    reboot
-else
-    echo -e "${Success}Skipping reboot${NC}"
-fi
+confirm_settings
+install
+finish
