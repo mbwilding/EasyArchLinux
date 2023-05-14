@@ -301,6 +301,9 @@ install() {
 }
 
 finish() {
+  echo -e "${Heading}Cleaning up${NC}"
+  rm *.sh
+  
   echo -e "${Success}Rebooting now${NC}"
   reboot
 }
