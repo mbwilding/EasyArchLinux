@@ -62,7 +62,7 @@ setup_pamac() {
   
   # Run install as non-root
   sudo chown -R $USERNAME:$USERNAME /tmp/yay
-  echo "$USER_PASSWORD" | sudo -S -u $USERNAME bash -c 'cd /tmp/yay && makepkg -si --noconfirm && yay -S pamac-aur --noconfirm'
+  echo "$USER_PASSWORD" | sudo -S -u $USERNAME bash -c 'cd /tmp/yay && echo "$1" | sudo -S makepkg -si --noconfirm && yay -S pamac-aur --noconfirm' -- "$USER_PASSWORD"
   
   # Enable AUR support in Pamac
   sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
