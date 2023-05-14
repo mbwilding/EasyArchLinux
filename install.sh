@@ -8,6 +8,7 @@ DEFAULT_COUNTRY="Australia"
 DEFAULT_CITY="Perth"
 DEFAULT_LOCALE="en_AU"
 DEFAULT_KERNEL="linux-zen"
+DEFAULT_VOLUME_PASSWORD="password"
 
 # Set up the colors
 NC='\033[0m' # No Color
@@ -132,6 +133,7 @@ select_settings() {
   prompt_user "Enter your city" CITY true
   prompt_user "Enter your locale" LOCALE
   prompt_user "Enter the desired kernel" KERNEL
+  prompt_user "Enter the volume encryption password" VOLUME_PASSWORD
   
   # Use the correct variable name for the target disk
   TIMEZONE="$COUNTRY/$CITY"
@@ -189,18 +191,18 @@ install() {
       DISK_PREFIX="${DISK}"
   fi
   
-  # Encrypts with the best key size. (Will prompt for a password)
-  cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random  luksFormat --type luks1 "$DISK_PREFIX"3
+  # Encrypts with the best key size. (INPUT)
+  echo -n "${VOLUME_PASSWORD}" | cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random luksFormat --type luks1 "$DISK_PREFIX"3 -
   
   # Opening LUKS container to test
   echo -e "${Heading}Opening the LUKS container to test password${NC}"
-  cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME
+  echo -n "${VOLUME_PASSWORD}" | cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME -
   cryptsetup -v luksClose $CRYPT_NAME
   
   # create a LUKS key of size 2048 and save it as boot.key
   echo -e "${Heading}Creating the LUKS key for '$CRYPT_NAME'${NC}"
   dd if=/dev/urandom of=./boot.key bs=2048 count=1
-  cryptsetup -v luksAddKey -i 1 "$DISK_PREFIX"3 ./boot.key
+  echo -n "${VOLUME_PASSWORD}" | cryptsetup -v luksAddKey -i 1 "$DISK_PREFIX"3 ./boot.key -
   
   # unlock LUKS container with the boot.key file
   echo -e "${Heading}Testing the LUKS keys for '$CRYPT_NAME'${NC}"
