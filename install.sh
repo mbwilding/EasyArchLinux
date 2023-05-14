@@ -21,6 +21,9 @@ Prompt='\033[1;34m'
 Default='\033[0;35m'
 Title='\033[1;36m'
 
+# Title
+echo -e "${Title}Arch Linux (Install)${NC}"
+
 # Use defaults switch (-d)
 USE_DEFAULTS=0
 if [[ $1 == "-d" ]]; then
@@ -28,9 +31,6 @@ if [[ $1 == "-d" ]]; then
   USE_DEFAULTS=1
   echo -e "${Error}Using defaults${NC}"
 fi
-
-# Title
-echo -e "${Title}Arch Linux (Install)${NC}"
 
 # Helper functions
 prompt_user() {
