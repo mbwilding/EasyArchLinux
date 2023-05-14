@@ -304,13 +304,8 @@ install() {
 }
 
 finish() {
-  read -rp "${Prompt}Do you want to reboot now? (Press Enter to continue, type 'n' to skip): ${NC}" REBOOT
-  if [[ -z "${REBOOT,,}" ]]; then
-      echo -e "${Success}Rebooting now${NC}"
-      reboot
-  else
-      echo -e "${Success}Skipping reboot${NC}"
-  fi
+  echo -e "${Success}Rebooting now${NC}"
+  reboot
 }
 
 # Execution order
