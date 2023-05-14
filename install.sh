@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Default Settings
+DEFAULT_HOSTNAME="arch"
+DEFAULT_USERNAME="user"
 DEFAULT_COUNTRY="Australia"
 DEFAULT_CITY="Perth"
 DEFAULT_LOCALE="en_AU"
-DEFAULT_USERNAME="user"
-DEFAULT_HOSTNAME="arch"
 DEFAULT_KERNEL="linux-zen"
 
 # Set up the colors
@@ -38,9 +38,6 @@ else
    echo -e "${Blue}\n UEFI is supported, proceeding...\n${NC}"
 fi
 
-# Get user input for locale settings
-echo -e "${Blue}Pressing enter will use the default specified in the parentheses.\n${NC}"
-
 # Select a disk to install to
 readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE | grep 'disk' | awk '{print $1}')
 FIRST_DISK=${AVAILABLE_DISKS[0]}
@@ -64,6 +61,20 @@ if ! $valid_disk_selection; then
   exit 1
 fi
 
+# Setup username and host
+echo -e "${Blue}Choosing a hostname and a username:${NC}"
+
+read -rp "Enter the new hostname (${DEFAULT_HOSTNAME}): " HOSTNAME
+HOSTNAME=${HOSTNAME:-${DEFAULT_HOSTNAME}}
+
+read -rp "Enter the new user (${DEFAULT_USERNAME}): " USERNAME
+USERNAME=${USERNAME:-${DEFAULT_USERNAME}}
+
+echo -e "\n"
+
+# Setup region
+echo -e "${Blue}Set your region information:${NC}"
+
 read -rp "Enter your country (${DEFAULT_COUNTRY}): " COUNTRY
 COUNTRY=$(capitalize_first_letter "${COUNTRY:-${DEFAULT_COUNTRY}}")
 
@@ -74,19 +85,10 @@ read -rp "Enter your locale (${DEFAULT_LOCALE}): " LOCALE
 LOCALE=${LOCALE:-${DEFAULT_LOCALE}}
 
 # Select your desired kernel
+echo -e "${Blue}Desired kernel:${NC}"
+
 read -rp "Enter the desired kernel (${DEFAULT_KERNEL}): " KERNEL
 KERNEL=${KERNEL:-${DEFAULT_KERNEL}}
-echo -e "\n"
-
-# Setup username and host
-echo -e "${Blue}Choosing a username and a hostname:${NC}"
-
-read -rp "Enter the new user (${DEFAULT_USERNAME}): " USERNAME
-USERNAME=${USERNAME:-${DEFAULT_USERNAME}}
-
-read -rp "Enter the new hostname (${DEFAULT_HOSTNAME}): " HOSTNAME
-HOSTNAME=${HOSTNAME:-${DEFAULT_HOSTNAME}}
-echo -e "\n"
 
 # Use the correct variable name for the target disk
 TIMEZONE="$COUNTRY/$CITY"
