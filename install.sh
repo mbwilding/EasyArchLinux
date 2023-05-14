@@ -282,17 +282,17 @@ install() {
   echo -e "${Heading}Preparing the chroot script to be executed${NC}"
   cp ./chroot.sh /mnt
   CHROOT="/mnt/chroot.sh"
-  sed -i "s|^USE_DEFAULTS=.*|USE_DEFAULTS='${USE_DEFAULTS}'|g" ${CHROOT}
-  sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" ${CHROOT}
-  sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" ${CHROOT}
-  sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" ${CHROOT}
-  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" ${CHROOT}
-  sed -i "s|^USER_PASSWORD=.*|USER_PASSWORD='${USER_PASSWORD}'|g" ${CHROOT}
-  sed -i "s|^ROOT_PASSWORD=.*|ROOT_PASSWORD='${ROOT_PASSWORD}'|g" ${CHROOT}
-  sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" ${CHROOT}
-  sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" ${CHROOT}
-  sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" ${CHROOT}
-  chmod +x ${CHROOT}
+  sed -i "s|^USE_DEFAULTS=.*|USE_DEFAULTS='${USE_DEFAULTS}'|g" $CHROOT
+  sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
+  sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
+  sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT
+  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
+  sed -i "s|^USER_PASSWORD=.*|USER_PASSWORD='${USER_PASSWORD}'|g" $CHROOT
+  sed -i "s|^ROOT_PASSWORD=.*|ROOT_PASSWORD='${ROOT_PASSWORD}'|g" $CHROOT
+  sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
+  sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
+  sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT
+  chmod +x $CHROOT
   
   # Chroot into new system and configure it 
   echo -e "${Heading}Chrooting into new system and configuring it${NC}"
