@@ -53,22 +53,6 @@ setup_swap() {
   systemctl enable systemd-swap
 }
 
-setup_pamac() {
-  # Get dependencies
-  pacman -S --needed git base-devel --noconfirm
-  
-  echo "$USER_PASSWORD" | sudo -S -u $USERNAME bash -c '
-      git clone https://aur.archlinux.org/libpamac-aur.git &&
-      (cd libpamac-aur && makepkg -si) &&
-      git clone https://aur.archlinux.org/pamac-aur.git &&
-      (cd pamac-aur && makepkg -si)
-  '
-  
-  # Enable AUR support in Pamac
-  sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
-  sudo sed -i 's/#CheckAURUpdates/CheckAURUpdates/' /etc/pamac.conf
-}
-
 setup_kde() {
   # Install and configure KDE with only the basics
   pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
@@ -157,7 +141,6 @@ install() {
   
   # Setup extras
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
-  ask_and_execute "Install Pamac from the AUR?" setup_pamac
   ask_and_execute "Install KDE Plasma?" setup_kde
   
   # Configure sudo
