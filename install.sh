@@ -153,6 +153,7 @@ confirm_settings() {
   echo -e "${Success}City: ${Default}${CITY}${NC}"
   echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
+  echo -e "${Success}Volume Password: ${Default}${VOLUME_PASSWORD}${NC}"
   
   prompt_continue
 }
@@ -237,10 +238,10 @@ install() {
   
   # Install Arch Linux base system. Add or remove packages as you wish.
   echo -e "${Heading}Installing Arch Linux base system${NC}" 
-  pacstrap -i /mnt base base-devel archlinux-keyring "$KERNEL" "$KERNEL"-headers \
-                   linux-firmware lvm2 grub efibootmgr dosfstools os-prober mtools \
-                   networkmanager wget curl git nano openssh unzip unrar p7zip neofetch zsh \
-                   zip unarj arj cabextract xz pbzip2 pixz lrzip cpio gdisk go rsync sudo
+  pacstrap /mnt base base-devel archlinux-keyring "$KERNEL" "$KERNEL"-headers \
+                linux-firmware lvm2 grub efibootmgr dosfstools os-prober mtools \
+                networkmanager wget curl git nano openssh unzip unrar p7zip neofetch zsh \
+                zip unarj arj cabextract xz pbzip2 pixz lrzip cpio gdisk go rsync sudo
   
   # Generate fstab file
   echo -e "${Heading}Generating fstab file${NC}" 
