@@ -59,6 +59,53 @@ setup_kde() {
   systemctl enable sddm
 }
 
+# Functions
+sudo_harden() {
+  # Configure sudo
+  echo -e "${Heading}Hardening sudo${NC}"
+  
+  # Set the secure path for sudo
+  append_sudoers "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
+  
+  # Disable the ability to run commands with root password
+  append_sudoers "Defaults !rootpw"
+  
+  # Set the default umask for sudo
+  append_sudoers "Defaults umask=077"
+  
+  # Set the default editor for sudo
+  append_sudoers "Defaults editor=/usr/bin/nano"
+  
+  # Set the default environment variables for sudo
+  append_sudoers "Defaults env_reset"
+  append_sudoers "Defaults env_reset,env_keep=\"COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS\""
+  append_sudoers "Defaults env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\""
+  append_sudoers "Defaults env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\""
+  append_sudoers "Defaults env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\""
+  append_sudoers "Defaults env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\""
+  
+  # Set the security tweaks for sudoers file
+  append_sudoers "Defaults timestamp_timeout=30"
+  append_sudoers "Defaults !visiblepw"
+  append_sudoers "Defaults always_set_home"
+  append_sudoers "Defaults match_group_by_gid"
+  append_sudoers "Defaults always_query_group_plugin"
+  append_sudoers "Defaults passwd_timeout=10" # 10 minutes before sudo times out
+  append_sudoers "Defaults passwd_tries=3" # Nr of attempts to enter password
+  append_sudoers "Defaults loglinelen=0"
+  append_sudoers "Defaults insults" # Insults user when wrong password is entered
+  append_sudoers "Defaults lecture=once"
+  append_sudoers "Defaults requiretty" # Forces to use real tty and not cron or cgi-bin
+  append_sudoers "Defaults logfile=/var/log/sudo.log"
+  append_sudoers "Defaults log_input, log_output" # Log input and output of sudo commands
+  append_sudoers "@includedir /etc/sudoers.d"
+  
+  # Set permissions for /etc/sudoers
+  echo -e "${Heading}Setting permissions for /etc/sudoers${NC}"
+  chmod 440 /etc/sudoers
+  chown root:root /etc/sudoers
+}
+
 install() {
   LUKS_KEYS='/etc/luksKeys/boot.key' # Where you will store the root partition key
   UUID=$(cryptsetup luksDump "$DISK_PREFIX"3 | grep UUID | awk '{print $2}')
@@ -143,49 +190,8 @@ install() {
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
   ask_and_execute "Install KDE Plasma?" setup_kde
   
-  # Configure sudo
-  echo -e "${Heading}Hardening sudo${NC}"
-  
-  # Set the secure path for sudo
-  append_sudoers "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
-  
-  # Disable the ability to run commands with root password
-  append_sudoers "Defaults !rootpw"
-  
-  # Set the default umask for sudo
-  append_sudoers "Defaults umask=077"
-  
-  # Set the default editor for sudo
-  append_sudoers "Defaults editor=/usr/bin/nano"
-  
-  # Set the default environment variables for sudo
-  append_sudoers "Defaults env_reset"
-  append_sudoers "Defaults env_reset,env_keep=\"COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS\""
-  append_sudoers "Defaults env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\""
-  append_sudoers "Defaults env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\""
-  append_sudoers "Defaults env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\""
-  append_sudoers "Defaults env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\""
-  
-  # Set the security tweaks for sudoers file
-  append_sudoers "Defaults timestamp_timeout=30"
-  append_sudoers "Defaults !visiblepw"
-  append_sudoers "Defaults always_set_home"
-  append_sudoers "Defaults match_group_by_gid"
-  append_sudoers "Defaults always_query_group_plugin"
-  append_sudoers "Defaults passwd_timeout=10" # 10 minutes before sudo times out
-  append_sudoers "Defaults passwd_tries=3" # Nr of attempts to enter password
-  append_sudoers "Defaults loglinelen=0"
-  append_sudoers "Defaults insults" # Insults user when wrong password is entered
-  append_sudoers "Defaults lecture=once"
-  append_sudoers "Defaults requiretty" # Forces to use real tty and not cron or cgi-bin
-  append_sudoers "Defaults logfile=/var/log/sudo.log"
-  append_sudoers "Defaults log_input, log_output" # Log input and output of sudo commands
-  append_sudoers "@includedir /etc/sudoers.d"
-  
-  # Set permissions for /etc/sudoers
-  echo -e "${Heading}Setting permissions for /etc/sudoers${NC}"
-  chmod 440 /etc/sudoers
-  chown root:root /etc/sudoers
+  # Harden sudo
+  sudo_harden
   
   # GRUB hardening setup and encryption
   echo -e "${Heading}Adjusting /etc/mkinitcpio.conf for encryption...${NC}"
