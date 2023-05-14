@@ -9,6 +9,8 @@ DEFAULT_CITY="Perth"
 DEFAULT_LOCALE="en_AU"
 DEFAULT_KERNEL="linux-zen"
 DEFAULT_VOLUME_PASSWORD="password"
+DEFAULT_ROOT_PASSWORD="password"
+DEFAULT_USER_PASSWORD="password"
 
 # Set up the colors
 NC='\033[0m' # No Color
@@ -129,11 +131,13 @@ select_settings() {
   select_disk
   prompt_user "Enter the new hostname" HOSTNAME
   prompt_user "Enter the new user" USERNAME
+  prompt_user "Enter the user password" USER_PASSWORD
+  prompt_user "Enter the root password" ROOT_PASSWORD
+  prompt_user "Enter the volume password" VOLUME_PASSWORD
   prompt_user "Enter your country" COUNTRY true
   prompt_user "Enter your city" CITY true
   prompt_user "Enter your locale" LOCALE
   prompt_user "Enter the desired kernel" KERNEL
-  prompt_user "Enter the volume encryption password" VOLUME_PASSWORD
   
   # Use the correct variable name for the target disk
   TIMEZONE="$COUNTRY/$CITY"
@@ -149,11 +153,13 @@ confirm_settings() {
   echo -e "${Success}Disk: ${Default}${TARGET_DISK}${NC}"
   echo -e "${Success}Host: ${Default}${HOSTNAME}${NC}"
   echo -e "${Success}User: ${Default}${USERNAME}${NC}"
+  echo -e "${Success}User Password: ${Default}${USER_PASSWORD}${NC}"
+  echo -e "${Success}Root Password: ${Default}${ROOT_PASSWORD}${NC}"
+  echo -e "${Success}Volume Password: ${Default}${VOLUME_PASSWORD}${NC}"
   echo -e "${Success}Country: ${Default}${COUNTRY}${NC}"
   echo -e "${Success}City: ${Default}${CITY}${NC}"
   echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
-  echo -e "${Success}Volume Password: ${Default}${VOLUME_PASSWORD}${NC}"
   
   prompt_continue
 }
@@ -267,8 +273,10 @@ install() {
   CHROOT="/mnt/chroot.sh"
   sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
   sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
-  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
   sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT
+  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
+  sed -i "s|^USER_PASSWORD=.*|USER_PASSWORD='${USER_PASSWORD}'|g" $CHROOT
+  sed -i "s|^ROOT_PASSWORD=.*|ROOT_PASSWORD='${ROOT_PASSWORD}'|g" $CHROOT
   sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
   sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
   sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT

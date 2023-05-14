@@ -14,6 +14,8 @@ DISK_PREFIX='<disk_prefix>'
 LVM_NAME='<lvm_name>'
 USERNAME='<username>'
 HOSTNAME='<hostname>'
+USER_PASSWORD='<user_password>'
+ROOT_PASSWORD='<root_password>'
 LOCALE='<locale>'
 TIMEZONE='<timezone>'
 KERNEL='<kernel>'
@@ -114,8 +116,13 @@ install() {
   groupadd $USERNAME
   useradd -g $USERNAME -G sudo,wheel,audio,video,optical -s /bin/bash -m $USERNAME
   
-  echo -e "${Prompt}Setting user password${NC}"
-  passwd $USERNAME
+  # Set user password
+  echo -e "${Heading}Setting user password${NC}"
+  echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
+  
+  # Set root password
+  echo -e "${Heading}Setting root password${NC}"
+  echo "root:${ROOT_PASSWORD}" | chpasswd
   
   echo -e "${Heading}Setting up /home and .ssh/ of the user '$USERNAME'${NC}"
   mkdir /home/$USERNAME/.ssh
@@ -240,9 +247,6 @@ install() {
   chmod 02750 /usr/bin/who
   chmod 02750 /usr/bin/whereis
   chmod 0600 /etc/login.defs
-  
-  echo -e "${Prompt}Setting root password${NC}"
-  passwd
 }
 
 finish() {
