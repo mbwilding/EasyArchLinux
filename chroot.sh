@@ -60,6 +60,21 @@ setup_kde() {
 }
 
 # Functions
+setup_ucode() {
+  echo -e "${Heading}Installing CPU µcode${NC}"
+    # Use grep to check if the string 'Intel' is present in the CPU info
+    if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
+        pacman -S intel-ucode --noconfirm
+    elif
+        # If the string 'Intel' is not present, check if the string 'AMD' is present
+        [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]; then
+        pacman -S amd-ucode --noconfirm
+    else
+        # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
+        echo -e "${Error}This is an unknown CPU${NC}"
+    fi
+}
+
 sudo_harden() {
   # Configure sudo
   echo -e "${Heading}Hardening sudo${NC}"
@@ -101,6 +116,53 @@ sudo_harden() {
   echo -e "${Heading}Setting permissions for /etc/sudoers${NC}"
   chmod 440 /etc/sudoers
   chown root:root /etc/sudoers
+}
+
+grub_harden() {
+  # GRUB hardening setup and encryption
+  echo -e "${Heading}Adjusting /etc/mkinitcpio.conf for encryption...${NC}"
+  sed -i "s|^HOOKS=.*|HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)|g" /etc/mkinitcpio.conf
+  sed -i "s|^FILES=.*|FILES=(${LUKS_KEYS})|g" /etc/mkinitcpio.conf
+  mkinitcpio -p "$KERNEL"
+  
+  echo -e "${Heading}Adjusting etc/default/grub for encryption...${NC}"
+  sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
+  
+  echo -e "${Heading}Hardening GRUB and Kernel boot options...${NC}"
+  GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
+  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
+  sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
+  sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${GRUBCMD}|g" /etc/default/grub
+  
+  echo -e "${Heading}Setting up GRUB${NC}"
+  grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
+  grub-mkconfig -o /boot/grub/grub.cfg
+  chmod 600 $LUKS_KEYS
+  
+  echo -e "${Heading}Setting permission on config files${NC}"
+  # Define arrays for different file paths based on the operations required
+  files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
+  files_644=(/etc/passwd /etc/group /etc/issue)                             # 644: Owner has read and write permissions; group and others have read permissions
+  files_600=(/etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/login.defs) # 600: Owner has read and write permissions; group and others have no permissions
+  files_750=(/etc/sudoers.d)                                                # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
+  files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
+  files_2750=(/bin/ping /usr/bin/w /usr/bin/who /usr/bin/whereis)           # 2750: Owner has read, write, and execute permissions; group has read and execute permissions and setuid bit is set; others have no permissions
+  files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
+  
+  # Changing ownership to root:root
+  chown_files=(/etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/fstab /etc/issue /boot/grub/grub.cfg /etc/sudoers.d /etc/sudoers)
+  
+  # Change permissions for different groups of files
+  for file in "${files_0700[@]}"; do chmod 0700 $file; done
+  for file in "${files_644[@]}"; do chmod 644 $file; done
+  for file in "${files_600[@]}"; do chmod 600 $file; done
+  for file in "${files_750[@]}"; do chmod 750 $file; done
+  for file in "${files_440[@]}"; do chmod 0440 $file; done
+  for file in "${files_2750[@]}"; do chmod 02750 $file; done
+  for file in "${files_og_rwx[@]}"; do chmod og-rwx $file; done
+  
+  # Change ownership
+  for file in "${chown_files[@]}"; do chown root:root $file; done
 }
 
 install() {
@@ -170,70 +232,16 @@ install() {
   # Update Arch
   pacman -Syu --noconfirm
   
-  echo -e "${Heading}Installing CPU µcode${NC}"
-  # Use grep to check if the string 'Intel' is present in the CPU info
-  if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
-      pacman -S intel-ucode --noconfirm
-  elif
-      # If the string 'Intel' is not present, check if the string 'AMD' is present
-      [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]; then
-      pacman -S amd-ucode --noconfirm
-  else
-      # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
-      echo -e "${Error}This is an unknown CPU${NC}"
-  fi
+  #ucode
+  setup_ucode
   
   # Setup extras
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
   ask_and_execute "Install KDE Plasma?" setup_kde
   
-  # Harden sudo
+  # Harden
   sudo_harden
-  
-  # GRUB hardening setup and encryption
-  echo -e "${Heading}Adjusting /etc/mkinitcpio.conf for encryption...${NC}"
-  sed -i "s|^HOOKS=.*|HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)|g" /etc/mkinitcpio.conf
-  sed -i "s|^FILES=.*|FILES=(${LUKS_KEYS})|g" /etc/mkinitcpio.conf
-  mkinitcpio -p "$KERNEL"
-  
-  echo -e "${Heading}Adjusting etc/default/grub for encryption...${NC}"
-  sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
-  
-  echo -e "${Heading}Hardening GRUB and Kernel boot options...${NC}"
-  GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
-  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
-  sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
-  sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${GRUBCMD}|g" /etc/default/grub
-  
-  echo -e "${Heading}Setting up GRUB${NC}"
-  grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
-  grub-mkconfig -o /boot/grub/grub.cfg
-  chmod 600 $LUKS_KEYS
-  
-  echo -e "${Heading}Setting permission on config files${NC}"
-  # Define arrays for different file paths based on the operations required
-  files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
-  files_644=(/etc/passwd /etc/group /etc/issue)                             # 644: Owner has read and write permissions; group and others have read permissions
-  files_600=(/etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/login.defs) # 600: Owner has read and write permissions; group and others have no permissions
-  files_750=(/etc/sudoers.d)                                                # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
-  files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
-  files_2750=(/bin/ping /usr/bin/w /usr/bin/who /usr/bin/whereis)           # 2750: Owner has read, write, and execute permissions; group has read and execute permissions and setuid bit is set; others have no permissions
-  files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
-  
-  # Changing ownership to root:root
-  chown_files=(/etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/fstab /etc/issue /boot/grub/grub.cfg /etc/sudoers.d /etc/sudoers)
-  
-  # Change permissions for different groups of files
-  for file in "${files_0700[@]}"; do chmod 0700 $file; done
-  for file in "${files_644[@]}"; do chmod 644 $file; done
-  for file in "${files_600[@]}"; do chmod 600 $file; done
-  for file in "${files_750[@]}"; do chmod 750 $file; done
-  for file in "${files_440[@]}"; do chmod 0440 $file; done
-  for file in "${files_2750[@]}"; do chmod 02750 $file; done
-  for file in "${files_og_rwx[@]}"; do chmod og-rwx $file; done
-  
-  # Change ownership
-  for file in "${chown_files[@]}"; do chown root:root $file; done
+  grub_harden
 }
 
 finish() {
