@@ -209,10 +209,9 @@ grub_harden() {
   # Define arrays for different file paths based on the operations required
   files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
   files_644=(/etc/passwd /etc/group /etc/issue)                             # 644: Owner has read and write permissions; group and others have read permissions
-  files_600=(/etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/login.defs) # 600: Owner has read and write permissions; group and others have no permissions
+  files_600=(/etc/shadow /etc/gshadow /etc/login.defs)                      # 600: Owner has read and write permissions; group and others have no permissions
   files_750=(/etc/sudoers.d)                                                # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
   files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
-  files_2750=(/bin/ping /usr/bin/w /usr/bin/who /usr/bin/whereis)           # 2750: Owner has read, write, and execute permissions; group has read and execute permissions and setuid bit is set; others have no permissions
   files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
 
   # Changing ownership to root:root
@@ -224,7 +223,6 @@ grub_harden() {
   for file in "${files_600[@]}"; do chmod 600 $file; done
   for file in "${files_750[@]}"; do chmod 750 $file; done
   for file in "${files_440[@]}"; do chmod 0440 $file; done
-  for file in "${files_2750[@]}"; do chmod 02750 $file; done
   for file in "${files_og_rwx[@]}"; do chmod og-rwx $file; done
 
   # Change ownership
