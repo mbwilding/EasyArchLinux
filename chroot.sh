@@ -20,6 +20,7 @@ ROOT_PASSWORD='<root_password>'
 LOCALE='<locale>'
 TIMEZONE='<timezone>'
 KERNEL='<kernel>'
+DESKTOP_ENVIRONMENT='<desktop_environment>'
 
 # Title
 echo -e "${Title}Arch Linux (Chroot)${NC}"
@@ -53,10 +54,74 @@ setup_swap() {
   systemctl enable systemd-swap
 }
 
+# Desktop environments
+setup_de() {
+  case "$DESKTOP_ENVIRONMENT" in
+  "kde")
+    setup_kde
+    ;;
+  "mate")
+    setup_mate
+    ;;
+  "gnome")
+    setup_gnome
+    ;;
+  "cinnamon")
+    setup_cinnamon
+    ;;
+  "budgie")
+    setup_budgie
+    ;;
+  "lxqt")
+    setup_lxqt
+    ;;
+  "xfce")
+    setup_xfce
+    ;;
+  "deepin")
+    setup_deepin
+    ;;
+  esac
+}
+
 setup_kde() {
-  # Install and configure KDE with only the basics
   pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
   systemctl enable sddm
+}
+
+setup_mate() {
+  pacman -S xorg xorg-xinit mate mate-extra lightdm lightdm-gtk-greeter caja mate-terminal --noconfirm
+  systemctl enable lightdm
+}
+
+setup_gnome() {
+  pacman -S xorg gnome gnome-terminal nautilus --noconfirm
+  systemctl enable gdm
+}
+
+setup_cinnamon() {
+  pacman -S xorg xorg-xinit cinnamon lightdm lightdm-gtk-greeter nemo gnome-terminal --noconfirm
+  systemctl enable lightdm
+}
+
+setup_budgie() {
+  pacman -S xorg xorg-xinit budgie-desktop lightdm lightdm-gtk-greeter gnome-terminal nautilus --noconfirm
+  systemctl enable lightdm
+}
+
+setup_lxqt() {
+  pacman -S xorg xorg-xinit lxqt sddm pcmanfm-qt qterminal --noconfirm
+  systemctl enable sddm
+}
+
+setup_xfce() {
+  pacman -S xorg xorg-xinit xfce4 xfce4-goodies lightdm lightdm-gtk-greeter mousepad xfce4-terminal --noconfirm
+  systemctl enable lightdm
+}
+
+setup_deepin() {
+  pacman -S xorg deepin deepin-terminal deepin-file-manager lightdm lightdm-deepin-greeter --noconfirm
+  systemctl enable lightdm
 }
 
 # Functions
@@ -236,13 +301,15 @@ install() {
   #ucode
   setup_ucode
 
-  # Setup extras
-  ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
-  ask_and_execute "Install KDE Plasma?" setup_kde
-
   # Harden
   sudo_harden
   grub_harden
+
+  # Desktop Environment
+  setup_de
+
+  # Setup extras
+  ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
 }
 
 finish() {

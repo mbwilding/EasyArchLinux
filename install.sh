@@ -11,6 +11,7 @@ DEFAULT_KERNEL="linux-zen"
 DEFAULT_VOLUME_PASSWORD="password"
 DEFAULT_ROOT_PASSWORD="password"
 DEFAULT_USER_PASSWORD="password"
+DEFAULT_DESKTOP_ENVIRONMENT="kde"
 
 # Set up the colors
 NC='\033[0m' # No Color
@@ -24,12 +25,76 @@ Title='\033[1;36m'
 # Title
 echo -e "${Title}Arch Linux (Install)${NC}"
 
-# Use defaults switch (-d)
+# Switches
 USE_DEFAULTS=0
-if [[ $1 == "-d" ]]; then
-  # If -d flag is present, use default values
-  USE_DEFAULTS=1
-  echo -e "${Error}Using defaults${NC}"
+DE_SWITCH_SET=0
+DESKTOP_ENVIRONMENT=""
+
+while (("$#")); do
+  case "$1" in
+  -d)
+    # If -d flag is present, use default values
+    USE_DEFAULTS=1
+    echo -e "${Error}Using defaults${NC}"
+    shift
+    ;;
+  -kde)
+    DESKTOP_ENVIRONMENT="kde"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -mate)
+    DESKTOP_ENVIRONMENT="mate"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -gnome)
+    DESKTOP_ENVIRONMENT="gnome"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -cinnamon)
+    DESKTOP_ENVIRONMENT="cinnamon"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -budgie)
+    DESKTOP_ENVIRONMENT="budgie"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -lxqt)
+    DESKTOP_ENVIRONMENT="lxqt"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -xfce)
+    DESKTOP_ENVIRONMENT="xfce"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -deepin)
+    DESKTOP_ENVIRONMENT="deepin"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  -none)
+    DESKTOP_ENVIRONMENT="none"
+    DE_SWITCH_SET=1
+    shift
+    ;;
+  *)
+    shift
+    ;;
+  esac
+done
+
+if [[ $USE_DEFAULTS -eq 1 && $DE_SWITCH_SET -eq 0 ]]; then
+  DESKTOP_ENVIRONMENT=$DEFAULT_DESKTOP_ENVIRONMENT
+fi
+
+if [ -z "$DESKTOP_ENVIRONMENT" ]; then
+  DESKTOP_ENVIRONMENT=$DEFAULT_DESKTOP_ENVIRONMENT
 fi
 
 # Helper functions
@@ -141,6 +206,70 @@ select_disk() {
   done
 }
 
+ask_de() {
+  if [ "$DE_SWITCH_SET" -eq 1 ] || [ "$USE_DEFAULTS" -eq 1 ]; then
+    return
+  fi
+
+  echo -e "${Prompt}Enter the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC})${NC}"
+  echo "1) KDE"
+  echo "2) Mate"
+  echo "3) Gnome"
+  echo "4) Cinnamon"
+  echo "5) Budgie"
+  echo "6) LXQt"
+  echo "7) XFCE"
+  echo "8) Deepin"
+  echo "9) None"
+
+  while true; do
+    read -rsn1 opt
+
+    if [ -z "$opt" ]; then
+      break
+    fi
+
+    case $opt in
+    1)
+      DESKTOP_ENVIRONMENT="kde"
+      break
+      ;;
+    2)
+      DESKTOP_ENVIRONMENT="mate"
+      break
+      ;;
+    3)
+      DESKTOP_ENVIRONMENT="gnome"
+      break
+      ;;
+    4)
+      DESKTOP_ENVIRONMENT="cinnamon"
+      break
+      ;;
+    5)
+      DESKTOP_ENVIRONMENT="budgie"
+      break
+      ;;
+    6)
+      DESKTOP_ENVIRONMENT="lxqt"
+      break
+      ;;
+    7)
+      DESKTOP_ENVIRONMENT="xfce"
+      break
+      ;;
+    8)
+      DESKTOP_ENVIRONMENT="deepin"
+      break
+      ;;
+    9)
+      DESKTOP_ENVIRONMENT="none"
+      break
+      ;;
+    esac
+  done
+}
+
 select_settings() {
   echo -e "${Heading}Configuration${NC}"
 
@@ -154,6 +283,7 @@ select_settings() {
   prompt_user "Enter your city" CITY true
   prompt_user "Enter your locale" LOCALE
   prompt_user "Enter the desired kernel" KERNEL
+  ask_de
 
   # Use the correct variable name for the target disk
   TIMEZONE="$COUNTRY/$CITY"
@@ -176,8 +306,10 @@ confirm_settings() {
   echo -e "${Success}City: ${Default}${CITY}${NC}"
   echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
+  echo -e "${Success}Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT}${NC}"
 
   prompt_continue
+  exit 1 ###################
 }
 
 install() {
@@ -292,6 +424,7 @@ install() {
   sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
   sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
   sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT
+  sed -i "s|^DESKTOP_ENVIRONMENT=.*|DESKTOP_ENVIRONMENT='${DESKTOP_ENVIRONMENT}'|g" $CHROOT
   chmod +x $CHROOT
 
   # Chroot into new system and configure it
