@@ -64,42 +64,39 @@ sudo_harden() {
   # Configure sudo
   echo -e "${Heading}Hardening sudo${NC}"
   
-  # Set the secure path for sudo
-  append_sudoers "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
-  
-  # Disable the ability to run commands with root password
-  append_sudoers "Defaults !rootpw"
-  
-  # Set the default umask for sudo
-  append_sudoers "Defaults umask=077"
-  
-  # Set the default editor for sudo
-  append_sudoers "Defaults editor=/usr/bin/nano"
-  
-  # Set the default environment variables for sudo
-  append_sudoers "Defaults env_reset"
-  append_sudoers "Defaults env_reset,env_keep=\"COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS\""
-  append_sudoers "Defaults env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\""
-  append_sudoers "Defaults env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\""
-  append_sudoers "Defaults env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\""
-  append_sudoers "Defaults env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\""
-  
-  # Set the security tweaks for sudoers file
-  append_sudoers "Defaults timestamp_timeout=30"
-  append_sudoers "Defaults !visiblepw"
-  append_sudoers "Defaults always_set_home"
-  append_sudoers "Defaults match_group_by_gid"
-  append_sudoers "Defaults always_query_group_plugin"
-  append_sudoers "Defaults passwd_timeout=10" # 10 minutes before sudo times out
-  append_sudoers "Defaults passwd_tries=3" # Nr of attempts to enter password
-  append_sudoers "Defaults loglinelen=0"
-  append_sudoers "Defaults insults" # Insults user when wrong password is entered
-  append_sudoers "Defaults lecture=once"
-  append_sudoers "Defaults requiretty" # Forces to use real tty and not cron or cgi-bin
-  append_sudoers "Defaults logfile=/var/log/sudo.log"
-  append_sudoers "Defaults log_input, log_output" # Log input and output of sudo commands
-  append_sudoers "@includedir /etc/sudoers.d"
-  
+  # Sudoers entries
+  sudoers_entries=(
+    "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
+    "Defaults !rootpw"
+    "Defaults umask=077"
+    "Defaults editor=/usr/bin/nano"
+    "Defaults env_reset"
+    "Defaults env_reset,env_keep=\"COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS\""
+    "Defaults env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\""
+    "Defaults env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\""
+    "Defaults env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\""
+    "Defaults env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\""
+    "Defaults timestamp_timeout=30"
+    "Defaults !visiblepw"
+    "Defaults always_set_home"
+    "Defaults match_group_by_gid"
+    "Defaults always_query_group_plugin"
+    "Defaults passwd_timeout=10"
+    "Defaults passwd_tries=3"
+    "Defaults loglinelen=0"
+    "Defaults insults"
+    "Defaults lecture=once"
+    "Defaults requiretty"
+    "Defaults logfile=/var/log/sudo.log"
+    "Defaults log_input, log_output"
+    "@includedir /etc/sudoers.d"
+  )
+
+  # Append each entry to sudoers file
+  for entry in "${sudoers_entries[@]}"; do
+    append_sudoers "$entry"
+  done
+
   # Set permissions for /etc/sudoers
   echo -e "${Heading}Setting permissions for /etc/sudoers${NC}"
   chmod 440 /etc/sudoers
@@ -214,32 +211,29 @@ install() {
   chmod 600 $LUKS_KEYS
   
   echo -e "${Heading}Setting permission on config files${NC}"
+  # Define arrays for different file paths based on the operations required
+  files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
+  files_644=(/etc/passwd /etc/group /etc/issue)                             # 644: Owner has read and write permissions; group and others have read permissions
+  files_600=(/etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/login.defs) # 600: Owner has read and write permissions; group and others have no permissions
+  files_750=(/etc/sudoers.d)                                                # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
+  files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
+  files_2750=(/bin/ping /usr/bin/w /usr/bin/who /usr/bin/whereis)           # 2750: Owner has read, write, and execute permissions; group has read and execute permissions and setuid bit is set; others have no permissions
+  files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
   
-  chmod 0700 /boot
-  chmod 644 /etc/passwd
-  chown root:root /etc/passwd
-  chmod 644 /etc/group
-  chown root:root /etc/group
-  chmod 600 /etc/shadow
-  chown root:root /etc/shadow
-  chmod 600 /etc/gshadow
-  chown root:root /etc/gshadow
-  chown root:root /etc/ssh/sshd_config
-  chmod 600 /etc/ssh/sshd_config
-  chown root:root /etc/fstab
-  chown root:root /etc/issue
-  chmod 644 /etc/issue
-  chown root:root /boot/grub/grub.cfg
-  chmod og-rwx /boot/grub/grub.cfg
-  chown root:root /etc/sudoers.d/
-  chmod 750 /etc/sudoers.d
-  chown -c root:root /etc/sudoers
-  chmod -c 0440 /etc/sudoers
-  chmod 02750 /bin/ping 
-  chmod 02750 /usr/bin/w 
-  chmod 02750 /usr/bin/who
-  chmod 02750 /usr/bin/whereis
-  chmod 0600 /etc/login.defs
+  # Changing ownership to root:root
+  chown_files=(/etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/fstab /etc/issue /boot/grub/grub.cfg /etc/sudoers.d /etc/sudoers)
+  
+  # Change permissions for different groups of files
+  for file in "${files_0700[@]}"; do chmod 0700 $file; done
+  for file in "${files_644[@]}"; do chmod 644 $file; done
+  for file in "${files_600[@]}"; do chmod 600 $file; done
+  for file in "${files_750[@]}"; do chmod 750 $file; done
+  for file in "${files_440[@]}"; do chmod 0440 $file; done
+  for file in "${files_2750[@]}"; do chmod 02750 $file; done
+  for file in "${files_og_rwx[@]}"; do chmod og-rwx $file; done
+  
+  # Change ownership
+  for file in "${chown_files[@]}"; do chown root:root $file; done
 }
 
 finish() {
