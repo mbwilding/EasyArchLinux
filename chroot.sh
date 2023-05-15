@@ -26,13 +26,13 @@ echo -e "${Title}Arch Linux (Chroot)${NC}"
 
 # Helper functions
 append_sudoers() {
-  echo "$1" | tee -a /etc/sudoers > /dev/null
+  echo "$1" | tee -a /etc/sudoers >/dev/null
 }
 
 ask_and_execute() {
   local question=$1
   local callback=$2
-  
+
   if [ "$USE_DEFAULTS" == "1" ]; then
     eval "${callback}"
   else
@@ -49,7 +49,7 @@ ask_and_execute() {
 # Optional install functions
 setup_swap() {
   pacman -S systemd-swap --noconfirm
-  echo 'swapfc_enabled=1' >> /etc/systemd/swap.conf
+  echo 'swapfc_enabled=1' >>/etc/systemd/swap.conf
   systemctl enable systemd-swap
 }
 
@@ -62,23 +62,24 @@ setup_kde() {
 # Functions
 setup_ucode() {
   echo -e "${Heading}Installing CPU µcode${NC}"
-    # Use grep to check if the string 'Intel' is present in the CPU info
-    if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
-        pacman -S intel-ucode --noconfirm
-    elif
-        # If the string 'Intel' is not present, check if the string 'AMD' is present
-        [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]; then
-        pacman -S amd-ucode --noconfirm
-    else
-        # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
-        echo -e "${Error}This is an unknown CPU${NC}"
-    fi
+  # Use grep to check if the string 'Intel' is present in the CPU info
+  if [[ $CPU_VENDOR_ID =~ "GenuineIntel" ]]; then
+    pacman -S intel-ucode --noconfirm
+  elif
+    # If the string 'Intel' is not present, check if the string 'AMD' is present
+    [[ $CPU_VENDOR_ID =~ "AuthenticAMD" ]]
+  then
+    pacman -S amd-ucode --noconfirm
+  else
+    # If neither 'Intel' nor 'AMD' is present, then it is an unknown CPU
+    echo -e "${Error}This is an unknown CPU${NC}"
+  fi
 }
 
 sudo_harden() {
   # Configure sudo
   echo -e "${Heading}Hardening sudo${NC}"
-  
+
   # Sudoers entries
   sudoers_entries=(
     "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
@@ -124,21 +125,21 @@ grub_harden() {
   sed -i "s|^HOOKS=.*|HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)|g" /etc/mkinitcpio.conf
   sed -i "s|^FILES=.*|FILES=(${LUKS_KEYS})|g" /etc/mkinitcpio.conf
   mkinitcpio -p "$KERNEL"
-  
+
   echo -e "${Heading}Adjusting etc/default/grub for encryption...${NC}"
   sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
-  
+
   echo -e "${Heading}Hardening GRUB and Kernel boot options...${NC}"
   GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
   GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
   sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
   sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${GRUBCMD}|g" /etc/default/grub
-  
+
   echo -e "${Heading}Setting up GRUB${NC}"
   grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
   grub-mkconfig -o /boot/grub/grub.cfg
   chmod 600 $LUKS_KEYS
-  
+
   echo -e "${Heading}Setting permission on config files${NC}"
   # Define arrays for different file paths based on the operations required
   files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
@@ -148,10 +149,10 @@ grub_harden() {
   files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
   files_2750=(/bin/ping /usr/bin/w /usr/bin/who /usr/bin/whereis)           # 2750: Owner has read, write, and execute permissions; group has read and execute permissions and setuid bit is set; others have no permissions
   files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
-  
+
   # Changing ownership to root:root
   chown_files=(/etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/fstab /etc/issue /boot/grub/grub.cfg /etc/sudoers.d /etc/sudoers)
-  
+
   # Change permissions for different groups of files
   for file in "${files_0700[@]}"; do chmod 0700 $file; done
   for file in "${files_644[@]}"; do chmod 644 $file; done
@@ -160,7 +161,7 @@ grub_harden() {
   for file in "${files_440[@]}"; do chmod 0440 $file; done
   for file in "${files_2750[@]}"; do chmod 02750 $file; done
   for file in "${files_og_rwx[@]}"; do chmod og-rwx $file; done
-  
+
   # Change ownership
   for file in "${chown_files[@]}"; do chown root:root $file; done
 }
@@ -169,76 +170,76 @@ install() {
   LUKS_KEYS='/etc/luksKeys/boot.key' # Where you will store the root partition key
   UUID=$(cryptsetup luksDump "$DISK_PREFIX"3 | grep UUID | awk '{print $2}')
   CPU_VENDOR_ID=$(lscpu | grep Vendor | awk '{print $3}')
-  
+
   pacman-key --init
   pacman-key --populate archlinux
-  
+
   # Set the timezone
   echo -e "${Heading}Setting the timezone${NC}"
   ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
   hwclock --systohc --utc
-  
+
   # Set up locale
   echo -e "${Heading}Setting the locale${NC}"
   sed -i "/#${LOCALE}.UTF-8/s/^#//g" /etc/locale.gen
   locale-gen
-  echo "LANG=${LOCALE}.UTF-8" > /etc/locale.conf
+  echo "LANG=${LOCALE}.UTF-8" >/etc/locale.conf
   export LANG=${LOCALE}.UTF-8
-  
+
   # Set hostname
   echo -e "${Heading}Setting hostname${NC}"
-  echo "$HOSTNAME" > /etc/hostname
-  echo "127.0.0.1 localhost localhost.localdomain $HOSTNAME.localdomain $HOSTNAME" > /etc/hosts
-  
-  echo "sshd : ALL : ALLOW" > /etc/hosts.allow
-  echo "ALL: LOCAL, 127.0.0.1" >> /etc/hosts.allow
-  echo "ALL: ALL" > /etc/hosts.deny
-  
+  echo "$HOSTNAME" >/etc/hostname
+  echo "127.0.0.1 localhost localhost.localdomain $HOSTNAME.localdomain $HOSTNAME" >/etc/hosts
+
+  echo "sshd : ALL : ALLOW" >/etc/hosts.allow
+  echo "ALL: LOCAL, 127.0.0.1" >>/etc/hosts.allow
+  echo "ALL: ALL" >/etc/hosts.deny
+
   # Enable and configure necessary services
   echo -e "${Heading}Enabling NetworkManager${NC}"
   systemctl enable NetworkManager
-  
+
   echo -e "${Heading}Enabling OpenSSH${NC}"
   systemctl enable sshd
-  
+
   # Create a group for sudo
   groupadd sudo
   append_sudoers "%sudo ALL=(ALL) ALL"
-  
+
   # add a user
   echo -e "${Heading}Adding the user '$USERNAME'${NC}"
   groupadd $USERNAME
   useradd -g $USERNAME -G sudo,wheel,audio,video,optical -s /bin/bash -m $USERNAME
-  
+
   # Set user password
   echo -e "${Heading}Setting user password${NC}"
   echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
-  
+
   # Set root password
   echo -e "${Heading}Setting root password${NC}"
   echo "root:${ROOT_PASSWORD}" | chpasswd
-  
+
   echo -e "${Heading}Setting up /home and .ssh/ of the user '$USERNAME'${NC}"
   mkdir /home/$USERNAME/.ssh
   touch /home/$USERNAME/.ssh/authorized_keys
   chmod 700 /home/$USERNAME/.ssh
   chmod 600 /home/$USERNAME/.ssh/authorized_keys
   chown -R $USERNAME:$USERNAME /home/$USERNAME
-  
-  # Set default ACLs on home directory 
+
+  # Set default ACLs on home directory
   echo -e "${Heading}Setting default ACLs on home directory${NC}"
   setfacl -d -m u::rwx,g::---,o::--- ~
-  
+
   # Update Arch
   pacman -Syu --noconfirm
-  
+
   #ucode
   setup_ucode
-  
+
   # Setup extras
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
   ask_and_execute "Install KDE Plasma?" setup_kde
-  
+
   # Harden
   sudo_harden
   grub_harden

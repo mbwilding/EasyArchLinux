@@ -10,10 +10,10 @@ setup_pamac() {
   # Clone and install yay
   git clone https://aur.archlinux.org/yay.git
   (cd yay && makepkg -si --noconfirm)
-  
+
   # Install Pamac
   yay -S --noconfirm pamac
-  
+
   # Enable AUR support in Pamac
   sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
 
