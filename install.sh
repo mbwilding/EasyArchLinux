@@ -309,7 +309,6 @@ confirm_settings() {
   echo -e "${Success}Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT}${NC}"
 
   prompt_continue
-  exit 1 ###################
 }
 
 install() {
