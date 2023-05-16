@@ -81,6 +81,10 @@ setup_gpu() {
 
   case "$GPU" in
   "nvidia")
+    # Blacklist Nouveau driver
+    mkdir -p /etc/modprobe.d/
+    echo "blacklist nouveau" >/etc/modprobe.d/nouveau_blacklist.conf
+
     # Install
     echo -e "${Heading}Installing ${Default}nvidia-dkms${NC}"
     pacman -S --needed --noconfirm nvidia-dkms nvidia-settings
@@ -92,7 +96,7 @@ setup_gpu() {
     # Hook
     echo -e "${Heading}Adding pacman hook ${Default}/etc/pacman.d/hooks/nvidia.hook${NC}"
     mkdir -p /etc/pacman.d/hooks/
-    cat > /etc/pacman.d/hooks/nvidia.hook <<EOF
+    cat >/etc/pacman.d/hooks/nvidia.hook <<EOF
 [Trigger]
 Operation=Install
 Operation=Upgrade
@@ -109,11 +113,11 @@ NeedsTargets
 Exec=/bin/sh -c 'while read -r trg; do case \$trg in $KERNEL) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 EOF
 
-  # mkinitcpio
-  mkinitcpio -p
-  
-  # Create X11 config
-  nvidia-xconfig
+    # mkinitcpio
+    mkinitcpio -p
+
+    # Create X11 config
+    nvidia-xconfig
     ;;
   esac
 }

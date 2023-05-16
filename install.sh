@@ -231,6 +231,10 @@ confirm_settings() {
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
   echo -e "${Success}Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT}${NC}"
 
+  if [ -n "$GPU" ]; then
+    echo -e "${Success}GPU: ${Default}${GPU}${NC}"
+  fi
+
   prompt_continue
 }
 
