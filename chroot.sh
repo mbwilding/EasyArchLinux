@@ -57,7 +57,7 @@ setup_swap() {
 # Desktop environments
 setup_desktop_environment() {
   echo -e "${Heading}Installing Desktop Environment ${Default}${DESKTOP_ENVIRONMENT^^}${NC}"
-  
+
   case "$DESKTOP_ENVIRONMENT" in
   "kde")
     pacman -S --needed --noconfirm xorg xorg-xinit plasma-meta sddm konsole
@@ -80,8 +80,9 @@ setup_desktop_environment() {
     systemctl enable lightdm
     ;;
   "lxqt")
-    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm xdg-utils ttf-freefont oxygen-icons qterminal
+    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm xdg-utils ttf-freefont oxygen-icons lxappearance qterminal
     systemctl enable sddm
+    echo -e "[Appearance]\nIconTheme=Oxygen" >/etc/xdg/lxqt/lxqt.conf
     ;;
   "xfce")
     pacman -S --needed --noconfirm xorg xorg-xinit xfce4 xfce4-goodies lightdm xfce4-terminal
@@ -222,7 +223,7 @@ install() {
   # Set host name
   echo -e "${Heading}Setting hostname and host files${NC}"
   echo "$HOSTNAME" >/etc/hostname
-  
+
   # Set host file
   echo -e "127.0.0.1\tlocalhost" >/etc/hosts
   echo -e "::1\tlocalhost" >/etc/hosts
