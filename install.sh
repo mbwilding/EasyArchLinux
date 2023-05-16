@@ -20,6 +20,7 @@ echo -e "${Title}Arch Linux (${Default}Install${Title})${NC}"
 USE_DEFAULTS=0
 DE_SWITCH_SET=0
 DESKTOP_ENVIRONMENT=""
+GPU=""
 
 while (("$#")); do
   case "$1" in
@@ -30,6 +31,9 @@ while (("$#")); do
   -none | -kde | -mate | -gnome | -cinnamon | -budgie | -lxqt | -xfce | -deepin)
     DESKTOP_ENVIRONMENT="${1#-}"
     DE_SWITCH_SET=1
+    ;;
+  -nvidia)
+    GPU="nvidia"
     ;;
   *) ;;
   esac
@@ -275,7 +279,6 @@ install() {
   # unlock LUKS container with the boot.key file
   echo -e "${Heading}Testing the LUKS keys for ${Default}${CRYPT_NAME}${NC}"
   cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME --key-file ./boot.key
-  echo -e "\n"
 
   # Create the LVM physical volume, volume group and logical volume
   echo -e "${Heading}Creating LVM logical volumes on ${Default}${LVM_NAME}${NC}"
@@ -334,7 +337,7 @@ install() {
   chmod +x /mnt/chroot.sh
 
   # Move settings into chroot script
-  settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT" "PACMAN_PARA")
+  settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT" "PACMAN_PARA" "GPU")
   for setting in "${settings[@]}"; do
     update_chroot_variable "$setting"
   done

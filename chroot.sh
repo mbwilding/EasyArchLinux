@@ -21,6 +21,7 @@ LOCALE='<locale>'
 TIMEZONE='<timezone>'
 KERNEL='<kernel>'
 DESKTOP_ENVIRONMENT='<desktop_environment>'
+GPU='<gpu>'
 PACMAN_PARA='<pacman_para>'
 
 # Title
@@ -64,6 +65,22 @@ pacman_para() {
   if [[ ! $PACMAN_PARA =~ ^(0|1)$ ]]; then
     sed -i "s/^#\(ParallelDownloads = \).*/\1$PACMAN_PARA/" /etc/pacman.conf
   fi
+}
+
+# Setup GPU
+setup_gpu() {
+
+  if [ -z "$GPU" ]; then
+    return
+  fi
+
+  echo -e "${Heading}Installing GPU drivers ${Default}${GPU^^}${NC}"
+
+  case "$DESKTOP_ENVIRONMENT" in
+  "nvidia")
+    pacman -S nvidia-dkms
+    ;;
+  esac
 }
 
 # Desktop environments
@@ -287,6 +304,9 @@ install() {
 
   #ucode
   setup_ucode
+
+  #gpu
+  setup_gpu
 
   # Harden
   sudo_harden
