@@ -12,7 +12,7 @@ setup_pamac() {
   (cd yay && makepkg -si --noconfirm)
 
   # Install Pamac
-  yay -S --noconfirm pamac
+  yay -S --noconfirm pamac-aur
 
   # Enable AUR support in Pamac
   sudo sed -i 's/#EnableAUR/EnableAUR/' /etc/pamac.conf
