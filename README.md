@@ -5,7 +5,7 @@ These scripts are to facilitate installing Arch Linux with UEFI and Full Disk En
 
 ### Installation
 First download the [Arch ISO](https://archlinux.org/download/).<br>
-Boot the ISO via burning to a disc or creating a bootable USB.<br>
+Boot the ISO via burning to a disc or creating a [Bootable USB](https://wiki.archlinux.org/title/USB_flash_installation_medium).<br>
 
 Then run;
 
