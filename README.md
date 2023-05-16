@@ -1,7 +1,8 @@
 ## Easy Arch Linux
 
 ### Information
-These scripts are to facilitate installing Arch Linux with UEFI and Full Disk Encryption (LUKS)
+These scripts are to facilitate installing Arch Linux with UEFI and Full Disk Encryption (LUKS)<br>
+This will wipe the entire disk that is selected, if there is only one disk available, it'll be selected by default.
 
 ### Installation
 Download the [Arch ISO](https://archlinux.org/download/).<br>
