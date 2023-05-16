@@ -118,6 +118,12 @@ check_uefi() {
   fi
 }
 
+preamble() {
+  # Update the ParallelDownloads setting in /etc/pacman.conf
+  para=5
+  sudo sed -i "s/^#\(ParallelDownloads = \).*/\1$para/" /etc/pacman.conf
+}
+
 select_disk() {
   readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
   DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
@@ -348,6 +354,7 @@ finish() {
 # Execution order
 check_root
 check_uefi
+preamble
 select_settings
 confirm_settings
 install
