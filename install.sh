@@ -98,6 +98,11 @@ capitalize_first_letter() {
   fi
 }
 
+update_chroot_variable() {
+  local variable_name=$1
+  sed -i "s|^${variable_name}=.*|${variable_name}='${!variable_name}'|g" /mnt/chroot.sh
+}
+
 # Functions
 check_root() {
   if [ "$(id -u)" != "0" ]; then
@@ -317,19 +322,20 @@ install() {
   # Preparing the chroot script to be executed
   echo -e "${Heading}Preparing the chroot script to be executed${NC}"
   cp ./chroot.sh /mnt
-  CHROOT="/mnt/chroot.sh"
-  sed -i "s|^USE_DEFAULTS=.*|USE_DEFAULTS='${USE_DEFAULTS}'|g" $CHROOT
-  sed -i "s|^DISK_PREFIX=.*|DISK_PREFIX='${DISK_PREFIX}'|g" $CHROOT
-  sed -i "s|^LVM_NAME=.*|LVM_NAME='${LVM_NAME}'|g" $CHROOT
-  sed -i "s|^HOSTNAME=.*|HOSTNAME='${HOSTNAME}'|g" $CHROOT
-  sed -i "s|^USERNAME=.*|USERNAME='${USERNAME}'|g" $CHROOT
-  sed -i "s|^USER_PASSWORD=.*|USER_PASSWORD='${USER_PASSWORD}'|g" $CHROOT
-  sed -i "s|^ROOT_PASSWORD=.*|ROOT_PASSWORD='${ROOT_PASSWORD}'|g" $CHROOT
-  sed -i "s|^LOCALE=.*|LOCALE='${LOCALE}'|g" $CHROOT
-  sed -i "s|^TIMEZONE=.*|TIMEZONE='${TIMEZONE}'|g" $CHROOT
-  sed -i "s|^KERNEL=.*|KERNEL='${KERNEL}'|g" $CHROOT
-  sed -i "s|^DESKTOP_ENVIRONMENT=.*|DESKTOP_ENVIRONMENT='${DESKTOP_ENVIRONMENT}'|g" $CHROOT
-  chmod +x $CHROOT
+  chmod +x /mnt/chroot.sh
+  
+  # Move settings into chroot script
+  update_chroot_variable "USE_DEFAULTS"
+  update_chroot_variable "DISK_PREFIX"
+  update_chroot_variable "LVM_NAME"
+  update_chroot_variable "HOSTNAME"
+  update_chroot_variable "USERNAME"
+  update_chroot_variable "USER_PASSWORD"
+  update_chroot_variable "ROOT_PASSWORD"
+  update_chroot_variable "LOCALE"
+  update_chroot_variable "TIMEZONE"
+  update_chroot_variable "KERNEL"
+  update_chroot_variable "DESKTOP_ENVIRONMENT"
 
   # Chroot into new system and configure it
   echo -e "${Heading}Chrooting into new system and configuring it${NC}"
