@@ -1,4 +1,7 @@
-## Arch Linux FDE UEFI Install
+## Easy Arch Linux
+
+### Information
+These scripts are to facilitate installing Arch Linux with UEFI and Full Disk Encryption (LUKS)
 
 ### Installation
 First download the [Arch ISO](https://archlinux.org/download/).<br>
