@@ -204,7 +204,7 @@ ask_desktop_environment() {
 
   options=("none" "kde" "mate" "gnome" "cinnamon" "budgie" "lxqt" "xfce" "deepin")
 
-  echo -e "${Prompt}Enter the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC}${Prompt}):${NC}"
+  echo -e "${Prompt}Enter a number for the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC}${Prompt}):${NC}"
   for i in "${!options[@]}"; do
     echo -e "${Prompt}$((i))${Success}) ${Default}${options[$i]^}${NC}"
   done
