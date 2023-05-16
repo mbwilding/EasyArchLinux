@@ -21,6 +21,7 @@ LOCALE='<locale>'
 TIMEZONE='<timezone>'
 KERNEL='<kernel>'
 DESKTOP_ENVIRONMENT='<desktop_environment>'
+PACMAN_PARA='<pacman_para>'
 
 # Title
 echo -e "${Title}Arch Linux (${Default}Chroot${Title})${NC}"
@@ -52,6 +53,15 @@ setup_swap() {
   pacman -S systemd-swap --noconfirm
   echo 'swapfc_enabled=1' >>/etc/systemd/swap.conf
   systemctl enable systemd-swap
+}
+
+# Parallel downloads for pacman
+pacman_para() {
+  echo -e "${Heading} Pacman set to download ${Default}para${Heading} packages concurrently ${NC}"
+  
+  if [[ ! $PACMAN_PARA =~ ^(0|1)$ ]]; then
+    sed -i "s/^#\(ParallelDownloads = \).*/\1$PACMAN_PARA/" /etc/pacman.conf
+  fi
 }
 
 # Desktop environments
@@ -205,9 +215,10 @@ install() {
   UUID=$(cryptsetup luksDump "$DISK_PREFIX"3 | grep UUID | awk '{print $2}')
   CPU_VENDOR_ID=$(lscpu | grep Vendor | awk '{print $3}')
 
+  pacman_para
   pacman-key --init
   pacman-key --populate archlinux
-
+  
   # Set the timezone
   echo -e "${Heading}Setting the timezone${NC}"
   ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime

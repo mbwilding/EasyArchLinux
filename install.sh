@@ -118,10 +118,13 @@ check_uefi() {
   fi
 }
 
-preamble() {
-  # Update the ParallelDownloads setting in /etc/pacman.conf
-  para=5
-  sudo sed -i "s/^#\(ParallelDownloads = \).*/\1$para/" /etc/pacman.conf
+# Parallel downloads for pacman
+pacman_para() {
+  echo -e "${Heading} Pacman set to download ${Default}para${Heading} packages concurrently ${NC}"
+  
+  if [[ ! $PACMAN_PARA =~ ^(0|1)$ ]]; then
+    sed -i "s/^#\(ParallelDownloads = \).*/\1$PACMAN_PARA/" /etc/pacman.conf
+  fi
 }
 
 select_disk() {
@@ -190,6 +193,7 @@ select_settings() {
   echo -e "${Heading}Configuration${NC}"
 
   select_disk
+  prompt_user "Enter download concurrency" PACMAN_PARA
   prompt_user "Enter the new hostname" HOSTNAME
   prompt_user "Enter the new user" USERNAME
   prompt_user "Enter the user password" USER_PASSWORD
@@ -331,7 +335,7 @@ install() {
   chmod +x /mnt/chroot.sh
   
   # Move settings into chroot script
-  settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT")
+  settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT" "PACMAN_PARA")
   for setting in "${settings[@]}"
   do
     update_chroot_variable "$setting"
@@ -354,8 +358,8 @@ finish() {
 # Execution order
 check_root
 check_uefi
-preamble
 select_settings
 confirm_settings
+pacman_para
 install
 finish
