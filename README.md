@@ -2,7 +2,8 @@
 
 ### Information
 These scripts are to facilitate installing Arch Linux with UEFI and Full Disk Encryption (LUKS)<br>
-This will wipe the entire disk that is selected, if there is only one disk available, it'll be selected by default.
+This will wipe the entire disk that is selected, if there is only one disk available, it'll be selected by default.<br>
+You will be prompted for all of the settings and asked to confirm before any changes are made, unless the ```-d``` default switch is provided.
 
 ### Installation
 Download the [Arch ISO](https://archlinux.org/download/).<br>
