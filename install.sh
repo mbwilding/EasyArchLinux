@@ -325,17 +325,11 @@ install() {
   chmod +x /mnt/chroot.sh
   
   # Move settings into chroot script
-  update_chroot_variable "USE_DEFAULTS"
-  update_chroot_variable "DISK_PREFIX"
-  update_chroot_variable "LVM_NAME"
-  update_chroot_variable "HOSTNAME"
-  update_chroot_variable "USERNAME"
-  update_chroot_variable "USER_PASSWORD"
-  update_chroot_variable "ROOT_PASSWORD"
-  update_chroot_variable "LOCALE"
-  update_chroot_variable "TIMEZONE"
-  update_chroot_variable "KERNEL"
-  update_chroot_variable "DESKTOP_ENVIRONMENT"
+  settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT")
+  for setting in "${settings[@]}"
+  do
+    update_chroot_variable "$setting"
+  done
 
   # Chroot into new system and configure it
   echo -e "${Heading}Chrooting into new system and configuring it${NC}"
