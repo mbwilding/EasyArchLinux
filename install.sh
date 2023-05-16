@@ -14,7 +14,7 @@ Default='\033[0;35m'
 Title='\033[1;36m'
 
 # Title
-echo -e "${Title}Arch Linux (Install)${NC}"
+echo -e "${Title}Arch Linux (${Default}Install${Title})${NC}"
 
 # Switches
 USE_DEFAULTS=0
@@ -264,11 +264,11 @@ install() {
   timedatectl set-ntp true
 
   # Wipe out partitions
-  echo -e "${Heading}Wiping all partitions on disk '$DISK'${NC}"
+  echo -e "${Heading}Wiping all partitions on disk: ${Default}${DISK}${NC}"
   sgdisk -Z "$DISK"
 
   # Partition the disk
-  echo -e "${Heading}Preparing disk '$DISK' for UEFI and Encryption${NC}"
+  echo -e "${Heading}Preparing disk ${Default}${DISK}${NC} for UEFI and Encryption${NC}"
   sgdisk -og "$DISK"
 
   # Create a 1MiB BIOS boot partition
@@ -297,17 +297,17 @@ install() {
   echo -n "${VOLUME_PASSWORD}" | cryptsetup -q --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 3000 --use-random luksFormat --type luks1 "$DISK_PREFIX"3 -
 
   # create a LUKS key of size 2048 and save it as boot.key
-  echo -e "${Heading}Creating the LUKS key for '$CRYPT_NAME'${NC}"
+  echo -e "${Heading}Creating the LUKS key for ${Default}${CRYPT_NAME}${NC}"
   dd if=/dev/urandom of=./boot.key bs=2048 count=1
   echo -n "${VOLUME_PASSWORD}" | cryptsetup -v luksAddKey -i 1 "$DISK_PREFIX"3 ./boot.key -
 
   # unlock LUKS container with the boot.key file
-  echo -e "${Heading}Testing the LUKS keys for '$CRYPT_NAME'${NC}"
+  echo -e "${Heading}Testing the LUKS keys for ${Default}${CRYPT_NAME}${NC}"
   cryptsetup -v luksOpen "$DISK_PREFIX"3 $CRYPT_NAME --key-file ./boot.key
   echo -e "\n"
 
   # Create the LVM physical volume, volume group and logical volume
-  echo -e "${Heading}Creating LVM logical volumes on '$LVM_NAME'${NC}"
+  echo -e "${Heading}Creating LVM logical volumes on ${Default}${LVM_NAME}${NC}"
   pvcreate --verbose /dev/mapper/$CRYPT_NAME
   vgcreate --verbose $LVM_NAME /dev/mapper/$CRYPT_NAME
   lvcreate --verbose -l 100%FREE $LVM_NAME -n root
@@ -343,7 +343,7 @@ install() {
   echo -e "${Heading}Generating fstab file${NC}"
   genfstab -pU /mnt >>/mnt/etc/fstab
 
-  echo -e "${Heading}Copying the '$CRYPT_NAME' key to '$LUKS_KEYS'${NC}"
+  echo -e "${Heading}Copying the ${Default}${CRYPT_NAME}${NC} key to ${Default}${LUKS_KEYS}${NC}"
   mkdir --verbose /mnt$LUKS_KEYS
   cp ./boot.key /mnt$LUKS_KEYS/boot.key
   rm ./boot.key

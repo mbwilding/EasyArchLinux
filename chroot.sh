@@ -23,7 +23,7 @@ KERNEL='<kernel>'
 DESKTOP_ENVIRONMENT='<desktop_environment>'
 
 # Title
-echo -e "${Title}Arch Linux (Chroot)${NC}"
+echo -e "${Title}Arch Linux (${Default}Chroot${Title})${NC}"
 
 # Helper functions
 append_sudoers() {
@@ -149,19 +149,19 @@ sudo_harden() {
   done
 
   # Set permissions for /etc/sudoers
-  echo -e "${Heading}Setting permissions for '/etc/sudoers'${NC}"
+  echo -e "${Heading}Setting permissions for ${Default}/etc/sudoers${NC}"
   chmod 440 /etc/sudoers
   chown root:root /etc/sudoers
 }
 
 grub_harden() {
   # GRUB hardening setup and encryption
-  echo -e "${Heading}Adjusting '/etc/mkinitcpio.conf' for encryption${NC}"
+  echo -e "${Heading}Adjusting ${Default}/etc/mkinitcpio.conf${Heading} for encryption${NC}"
   sed -i "s|^HOOKS=.*|HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)|g" /etc/mkinitcpio.conf
   sed -i "s|^FILES=.*|FILES=(${LUKS_KEYS})|g" /etc/mkinitcpio.conf
   mkinitcpio -p "$KERNEL"
 
-  echo -e "${Heading}Adjusting 'etc/default/grub' for encryption${NC}"
+  echo -e "${Heading}Adjusting ${Default}/etc/default/grub${Heading} for encryption${NC}"
   sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
 
   echo -e "${Heading}Hardening GRUB and Kernel boot options${NC}"
@@ -220,7 +220,7 @@ install() {
   export LANG=${LOCALE}.UTF-8
 
   # Set host name
-  echo -e "${Heading}Setting hostname${NC}"
+  echo -e "${Heading}Setting hostname and host files${NC}"
   echo "$HOSTNAME" >/etc/hostname
   
   # Set host file
@@ -245,7 +245,7 @@ install() {
   append_sudoers "%sudo ALL=(ALL) ALL"
 
   # add a user
-  echo -e "${Heading}Adding the user '$USERNAME'${NC}"
+  echo -e "${Heading}Adding the user ${Default}${USERNAME}${NC}"
   groupadd $USERNAME
   useradd -g $USERNAME -G sudo,wheel,audio,video,optical -s /bin/bash -m $USERNAME
 
@@ -257,7 +257,7 @@ install() {
   echo -e "${Heading}Setting root password${NC}"
   echo "root:${ROOT_PASSWORD}" | chpasswd
 
-  echo -e "${Heading}Setting up '/home' and '.ssh/' of the user '$USERNAME'${NC}"
+  echo -e "${Heading}Setting up ${Default}/home${Heading} and ${Default}.ssh/${Heading} of the user ${Default}$USERNAME${NC}"
   mkdir /home/$USERNAME/.ssh
   touch /home/$USERNAME/.ssh/authorized_keys
   chmod 700 /home/$USERNAME/.ssh
