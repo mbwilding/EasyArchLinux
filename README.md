@@ -25,9 +25,7 @@ Steps with git;
     ./install.sh
 
 ### Editing defaults
-You can edit the defaults at the top of the file before running the installer.
-
-    nano defaults.sh
+You can edit the ```defaults.sh``` file, which is where ```install.sh``` gets its defaults from.
 
 ### Switches
 These switches can be used on ```install.sh``` or ```bootstrap.sh```<br>
