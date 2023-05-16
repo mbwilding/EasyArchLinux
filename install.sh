@@ -31,8 +31,7 @@ while (("$#")); do
     DESKTOP_ENVIRONMENT="${1#-}"
     DE_SWITCH_SET=1
     ;;
-  *)
-    ;;
+  *) ;;
   esac
   shift
 done
@@ -121,7 +120,7 @@ check_uefi() {
 # Parallel downloads for pacman
 pacman_para() {
   echo -e "${Heading}Pacman set to download ${Default}${PACMAN_PARA}${Heading} packages concurrently${NC}"
-  
+
   if [[ ! $PACMAN_PARA =~ ^(0|1)$ ]]; then
     sed -i "s/^#\(ParallelDownloads = \).*/\1$PACMAN_PARA/" /etc/pacman.conf
   fi
@@ -333,11 +332,10 @@ install() {
   echo -e "${Heading}Preparing the chroot script to be executed${NC}"
   cp ./chroot.sh /mnt
   chmod +x /mnt/chroot.sh
-  
+
   # Move settings into chroot script
   settings=("USE_DEFAULTS" "DISK_PREFIX" "LVM_NAME" "HOSTNAME" "USERNAME" "USER_PASSWORD" "ROOT_PASSWORD" "LOCALE" "TIMEZONE" "KERNEL" "DESKTOP_ENVIRONMENT" "PACMAN_PARA")
-  for setting in "${settings[@]}"
-  do
+  for setting in "${settings[@]}"; do
     update_chroot_variable "$setting"
   done
 
