@@ -24,60 +24,17 @@ DESKTOP_ENVIRONMENT=""
 while (("$#")); do
   case "$1" in
   -d)
-    # If -d flag is present, use default values
     USE_DEFAULTS=1
     echo -e "${Error}Using defaults${NC}"
-    shift
     ;;
-  -kde)
-    DESKTOP_ENVIRONMENT="kde"
+  -none | -kde | -mate | -gnome | -cinnamon | -budgie | -lxqt | -xfce | -deepin)
+    DESKTOP_ENVIRONMENT="${1#-}"
     DE_SWITCH_SET=1
-    shift
-    ;;
-  -mate)
-    DESKTOP_ENVIRONMENT="mate"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -gnome)
-    DESKTOP_ENVIRONMENT="gnome"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -cinnamon)
-    DESKTOP_ENVIRONMENT="cinnamon"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -budgie)
-    DESKTOP_ENVIRONMENT="budgie"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -lxqt)
-    DESKTOP_ENVIRONMENT="lxqt"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -xfce)
-    DESKTOP_ENVIRONMENT="xfce"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -deepin)
-    DESKTOP_ENVIRONMENT="deepin"
-    DE_SWITCH_SET=1
-    shift
-    ;;
-  -none)
-    DESKTOP_ENVIRONMENT="none"
-    DE_SWITCH_SET=1
-    shift
     ;;
   *)
-    shift
     ;;
   esac
+  shift
 done
 
 if [[ $USE_DEFAULTS -eq 1 && $DE_SWITCH_SET -eq 0 ]]; then
