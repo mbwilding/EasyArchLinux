@@ -177,7 +177,7 @@ ask_desktop_environment() {
 
   echo -e "${Prompt}Enter a number for the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC}${Prompt}):${NC}"
   for i in "${!options[@]}"; do
-    echo -e "${Prompt}$((i))${Success}) ${Default}${options[$i]^}${NC}"
+    echo -e "${Prompt}$((i))${Default}) ${Success}${options[$i]^}${NC}"
   done
 
   while true; do
