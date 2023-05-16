@@ -110,11 +110,8 @@ Description=Update NVIDIA module in initcpio
 Depends=mkinitcpio
 When=PostTransaction
 NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case \$trg in $KERNEL) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+Exec=/bin/sh -c 'while read -r trg; do case \$trg in $KERNEL) exit 0; esac; done; /usr/bin/mkinitcpio -p $KERNEL'
 EOF
-
-    # mkinitcpio
-    mkinitcpio -p
 
     # Create X11 config
     nvidia-xconfig

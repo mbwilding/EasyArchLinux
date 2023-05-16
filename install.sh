@@ -130,6 +130,7 @@ pacman_para() {
   fi
 }
 
+# TODO doesn't just wait for keypress, needs enter
 select_disk() {
   readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
   DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
@@ -171,6 +172,7 @@ select_disk() {
   done
 }
 
+# TODO enter doesn't work for default
 ask_desktop_environment() {
   if [ "$DE_SWITCH_SET" -eq 1 ] || [ "$USE_DEFAULTS" -eq 1 ]; then
     return
