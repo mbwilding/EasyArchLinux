@@ -7,13 +7,22 @@ These scripts are to facilitate installing Arch Linux with UEFI and Full Disk En
 Download the [Arch ISO](https://archlinux.org/download/).<br>
 Boot the ISO via creating a [Bootable USB](https://wiki.archlinux.org/title/USB_flash_installation_medium).<br>
 
-Then run;
+Steps without git;
 
     for file in install chroot
-    do curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/${file}.sh
+    do curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/${file}.sh &&
+    chmod +x ${file}.sh
     done
 
+    ./install.sh
+
+Steps with git;
+
+    pacman -S git
+    git clone https://github.com/mbwilding/EasyArchLinux.git
+    cd EasyArchLinux
     chmod +x *.sh
+
     ./install.sh
 
 ### Editing defaults
