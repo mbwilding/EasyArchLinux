@@ -111,6 +111,9 @@ EOF
 
   # mkinitcpio
   mkinitcpio -p
+  
+  # Create X11 config
+  nvidia-xconfig
     ;;
   esac
 }
