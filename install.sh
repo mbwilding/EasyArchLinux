@@ -33,7 +33,7 @@ while (("$#")); do
     DE_SWITCH_SET=1
     ;;
   -nvidia)
-    GPU="nvidia"
+    GPU="${1#-}"
     ;;
   *) ;;
   esac

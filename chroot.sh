@@ -78,7 +78,7 @@ setup_gpu() {
 
   case "$DESKTOP_ENVIRONMENT" in
   "nvidia")
-    pacman -S nvidia-dkms
+    pacman -S --needed --noconfirm nvidia-dkms 
     ;;
   esac
 }
