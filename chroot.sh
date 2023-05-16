@@ -56,7 +56,7 @@ setup_swap() {
 
 # Desktop environments
 setup_desktop_environment() {
-  echo -e "${Heading}Installing Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT^^}${NC}"
+  echo -e "${Heading}Installing Desktop Environment ${Default}${DESKTOP_ENVIRONMENT^^}${NC}"
   
   case "$DESKTOP_ENVIRONMENT" in
   "kde")

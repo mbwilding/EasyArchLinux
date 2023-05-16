@@ -264,7 +264,7 @@ install() {
   timedatectl set-ntp true
 
   # Wipe out partitions
-  echo -e "${Heading}Wiping all partitions on disk: ${Default}${DISK}${NC}"
+  echo -e "${Heading}Wiping all partitions on disk ${Default}${DISK}${NC}"
   sgdisk -Z "$DISK"
 
   # Partition the disk
