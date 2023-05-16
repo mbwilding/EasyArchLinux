@@ -20,7 +20,6 @@ Steps with git;
     git clone https://github.com/mbwilding/EasyArchLinux.git
     cd EasyArchLinux
     chmod +x *.sh
-
     ./install.sh
 
 ### Editing defaults
