@@ -37,6 +37,7 @@ ask_and_execute() {
 
   if [ "$USE_DEFAULTS" == "1" ]; then
     eval "${callback}"
+    return
   else
     echo -ne "${Prompt}${question} (${Default}Enter${Prompt})${NC}"
     read -rsn1 CONTINUE
@@ -46,6 +47,7 @@ ask_and_execute() {
       CONTINUE=""
     fi
   fi
+  echo
 }
 
 # Optional install functions
