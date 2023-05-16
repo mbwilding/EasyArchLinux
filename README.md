@@ -9,12 +9,9 @@ Boot the ISO via creating a [Bootable USB](https://wiki.archlinux.org/title/USB_
 
 Steps without git;
 
-    for file in install chroot
-    do curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/${file}.sh &&
-    chmod +x ${file}.sh
-    done
-
-    ./install.sh
+    curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/bootstrap.sh
+    chmod +x bootstrap.sh
+    ./bootstrap.sh
 
 Steps with git;
 
@@ -31,6 +28,8 @@ You can edit the defaults at the top of the file before running.
     nano install.sh
 
 ### Switches
+These switches can be used on ```install.sh``` or ```bootstrap.sh```<br>
+
 Running ```-d``` will install with defaults.<br>
 If there are multiple disks detected, it will still prompt.<br>
 
