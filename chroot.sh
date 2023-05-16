@@ -80,7 +80,7 @@ setup_desktop_environment() {
     systemctl enable lightdm
     ;;
   "lxqt")
-    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm qterminal
+    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm xdg-utils ttf-freefont oxygen-icons qterminal
     systemctl enable sddm
     ;;
   "xfce")
