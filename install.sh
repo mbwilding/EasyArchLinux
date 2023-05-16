@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 
 # Default Settings
-source /path/to/defaults.sh
+source defaults.sh
 
 # Set up the colors
 NC='\033[0m' # No Color
