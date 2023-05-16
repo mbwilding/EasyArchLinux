@@ -264,7 +264,7 @@ confirm_settings() {
   echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
   echo -e "${Success}Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT}${NC}"
-  exit 1 # REMOVE ME
+
   prompt_continue
 }
 
