@@ -80,9 +80,9 @@ setup_desktop_environment() {
     systemctl enable lightdm
     ;;
   "lxqt")
-    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm xdg-utils ttf-freefont oxygen-icons lxappearance qterminal
+    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm xdg-utils oxygen-icons qterminal
     systemctl enable sddm
-    echo -e "[Appearance]\nIconTheme=Oxygen" >/etc/xdg/lxqt/lxqt.conf
+    # TODO The icons are blank by default, you can set them to oxygen in the appearance settings
     ;;
   "xfce")
     pacman -S --needed --noconfirm xorg xorg-xinit xfce4 xfce4-goodies lightdm xfce4-terminal
