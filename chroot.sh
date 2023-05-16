@@ -60,35 +60,35 @@ setup_desktop_environment() {
   
   case "$DESKTOP_ENVIRONMENT" in
   "kde")
-    pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit plasma-meta sddm konsole
     systemctl enable sddm
     ;;
   "mate")
-    pacman -S xorg xorg-xinit mate mate-extra lightdm lightdm-gtk-greeter caja mate-terminal --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit mate mate-extra lightdm mate-terminal
     systemctl enable lightdm
     ;;
   "gnome")
-    pacman -S xorg gnome gnome-terminal nautilus --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit gnome gdm gnome-terminal
     systemctl enable gdm
     ;;
   "cinnamon")
-    pacman -S xorg xorg-xinit cinnamon lightdm lightdm-gtk-greeter nemo gnome-terminal --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit cinnamon lightdm gnome-terminal
     systemctl enable lightdm
     ;;
   "budgie")
-    pacman -S xorg xorg-xinit budgie-desktop lightdm lightdm-gtk-greeter gnome-terminal nautilus --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit budgie-desktop lightdm gnome-terminal
     systemctl enable lightdm
     ;;
   "lxqt")
-    pacman -S xorg xorg-xinit lxqt sddm pcmanfm-qt qterminal --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit lxqt sddm qterminal
     systemctl enable sddm
     ;;
   "xfce")
-    pacman -S xorg xorg-xinit xfce4 xfce4-goodies lightdm lightdm-gtk-greeter mousepad xfce4-terminal --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit xfce4 xfce4-goodies lightdm xfce4-terminal
     systemctl enable lightdm
     ;;
   "deepin")
-    pacman -S xorg deepin deepin-terminal deepin-file-manager lightdm lightdm-deepin-greeter --noconfirm
+    pacman -S --needed --noconfirm xorg xorg-xinit deepin lightdm deepin-terminal
     systemctl enable lightdm
     ;;
   esac
