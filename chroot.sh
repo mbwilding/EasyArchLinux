@@ -83,7 +83,7 @@ setup_gpu() {
   "nvidia")
     # Install
     echo -e "${Heading}Installing ${Default}nvidia-dkms${NC}"
-    pacman -S --needed --noconfirm nvidia-dkms
+    pacman -S --needed --noconfirm nvidia-dkms nvidia-settings
 
     # Kernel
     echo -e "${Heading}Adding GRUB parameter ${Default}nvidia_drm.modeset=1${NC}"
@@ -91,23 +91,26 @@ setup_gpu() {
 
     # Hook
     echo -e "${Heading}Adding pacman hook ${Default}/etc/pacman.d/hooks/nvidia.hook${NC}"
-    cat >/etc/pacman.d/hooks/nvidia.hook <<EOF
+    mkdir -p /etc/pacman.d/hooks/
+    cat > /etc/pacman.d/hooks/nvidia.hook <<EOF
 [Trigger]
 Operation=Install
 Operation=Upgrade
 Operation=Remove
 Type=Package
-Target=nvidia
-Target=linux
-# Change the linux part above and in the Exec line if a different kernel is used
+Target=nvidia-dkms
+Target=$KERNEL
 
 [Action]
 Description=Update NVIDIA module in initcpio
 Depends=mkinitcpio
 When=PostTransaction
 NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+Exec=/bin/sh -c 'while read -r trg; do case \$trg in $KERNEL) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 EOF
+
+  # mkinitcpio
+  mkinitcpio -p
     ;;
   esac
 }
