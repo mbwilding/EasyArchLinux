@@ -268,7 +268,7 @@ install() {
   sgdisk -Z "$DISK"
 
   # Partition the disk
-  echo -e "${Heading}Preparing disk ${Default}${DISK}${NC} for UEFI and Encryption${NC}"
+  echo -e "${Heading}Preparing disk ${Default}${DISK}${Heading} for UEFI and Encryption${NC}"
   sgdisk -og "$DISK"
 
   # Create a 1MiB BIOS boot partition
@@ -343,7 +343,7 @@ install() {
   echo -e "${Heading}Generating fstab file${NC}"
   genfstab -pU /mnt >>/mnt/etc/fstab
 
-  echo -e "${Heading}Copying the ${Default}${CRYPT_NAME}${NC} key to ${Default}${LUKS_KEYS}${NC}"
+  echo -e "${Heading}Copying the ${Default}${CRYPT_NAME}${Heading} key to ${Default}${LUKS_KEYS}${NC}"
   mkdir --verbose /mnt$LUKS_KEYS
   cp ./boot.key /mnt$LUKS_KEYS/boot.key
   rm ./boot.key
