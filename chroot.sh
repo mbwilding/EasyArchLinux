@@ -55,7 +55,7 @@ setup_swap() {
 }
 
 # Desktop environments
-setup_dektop_environment() {
+setup_desktop_environment() {
   case "$DESKTOP_ENVIRONMENT" in
   "kde")
     pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
@@ -272,7 +272,7 @@ install() {
   grub_harden
 
   # Desktop Environment
-  setup_dektop_environment
+  setup_desktop_environment
 
   # Setup extras
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
