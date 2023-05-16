@@ -224,7 +224,9 @@ install() {
   echo "$HOSTNAME" >/etc/hostname
   
   # Set host file
-  echo -e "127.0.0.1\tlocalhost\n::1\tlocalhost\n127.0.1.1\t$HOSTNAME.localdomain\t$HOSTNAME" >/etc/hosts
+  echo -e "127.0.0.1\tlocalhost" >/etc/hosts
+  echo -e "::1\tlocalhost" >/etc/hosts
+  echo -e "127.0.1.1\t$HOSTNAME.localdomain\t$HOSTNAME" >/etc/hosts
 
   # Set host permissions
   echo "sshd : ALL : ALLOW" >/etc/hosts.allow
