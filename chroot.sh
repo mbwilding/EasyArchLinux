@@ -219,11 +219,14 @@ install() {
   echo "LANG=${LOCALE}.UTF-8" >/etc/locale.conf
   export LANG=${LOCALE}.UTF-8
 
-  # Set hostname
+  # Set host name
   echo -e "${Heading}Setting hostname${NC}"
   echo "$HOSTNAME" >/etc/hostname
-  echo "127.0.0.1 localhost localhost.localdomain $HOSTNAME.localdomain $HOSTNAME" >/etc/hosts
+  
+  # Set host file
+  echo -e "127.0.0.1\tlocalhost\n::1\tlocalhost\n127.0.1.1\t$HOSTNAME.localdomain\t$HOSTNAME" >/etc/hosts
 
+  # Set host permissions
   echo "sshd : ALL : ALLOW" >/etc/hosts.allow
   echo "ALL: LOCAL, 127.0.0.1" >>/etc/hosts.allow
   echo "ALL: ALL" >/etc/hosts.deny
