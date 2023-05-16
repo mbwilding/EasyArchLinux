@@ -57,7 +57,7 @@ setup_swap() {
 
 # Parallel downloads for pacman
 pacman_para() {
-  echo -e "${Heading}Pacman set to download ${Default}${PACMAN_PARA}}${Heading} packages concurrently${NC}"
+  echo -e "${Heading}Pacman set to download ${Default}${PACMAN_PARA}${Heading} packages concurrently${NC}"
   
   if [[ ! $PACMAN_PARA =~ ^(0|1)$ ]]; then
     sed -i "s/^#\(ParallelDownloads = \).*/\1$PACMAN_PARA/" /etc/pacman.conf
