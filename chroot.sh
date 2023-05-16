@@ -55,73 +55,41 @@ setup_swap() {
 }
 
 # Desktop environments
-setup_de() {
+setup_dektop_environment() {
   case "$DESKTOP_ENVIRONMENT" in
   "kde")
-    setup_kde
+    pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
+    systemctl enable sddm
     ;;
   "mate")
-    setup_mate
+    pacman -S xorg xorg-xinit mate mate-extra lightdm lightdm-gtk-greeter caja mate-terminal --noconfirm
+    systemctl enable lightdm
     ;;
   "gnome")
-    setup_gnome
+    pacman -S xorg gnome gnome-terminal nautilus --noconfirm
+    systemctl enable gdm
     ;;
   "cinnamon")
-    setup_cinnamon
+    pacman -S xorg xorg-xinit cinnamon lightdm lightdm-gtk-greeter nemo gnome-terminal --noconfirm
+    systemctl enable lightdm
     ;;
   "budgie")
-    setup_budgie
+    pacman -S xorg xorg-xinit budgie-desktop lightdm lightdm-gtk-greeter gnome-terminal nautilus --noconfirm
+    systemctl enable lightdm
     ;;
   "lxqt")
-    setup_lxqt
+    pacman -S xorg xorg-xinit lxqt sddm pcmanfm-qt qterminal --noconfirm
+    systemctl enable sddm
     ;;
   "xfce")
-    setup_xfce
+    pacman -S xorg xorg-xinit xfce4 xfce4-goodies lightdm lightdm-gtk-greeter mousepad xfce4-terminal --noconfirm
+    systemctl enable lightdm
     ;;
   "deepin")
-    setup_deepin
+    pacman -S xorg deepin deepin-terminal deepin-file-manager lightdm lightdm-deepin-greeter --noconfirm
+    systemctl enable lightdm
     ;;
   esac
-}
-
-setup_kde() {
-  pacman -S xorg xorg-xinit plasma sddm dolphin konsole --noconfirm
-  systemctl enable sddm
-}
-
-setup_mate() {
-  pacman -S xorg xorg-xinit mate mate-extra lightdm lightdm-gtk-greeter caja mate-terminal --noconfirm
-  systemctl enable lightdm
-}
-
-setup_gnome() {
-  pacman -S xorg gnome gnome-terminal nautilus --noconfirm
-  systemctl enable gdm
-}
-
-setup_cinnamon() {
-  pacman -S xorg xorg-xinit cinnamon lightdm lightdm-gtk-greeter nemo gnome-terminal --noconfirm
-  systemctl enable lightdm
-}
-
-setup_budgie() {
-  pacman -S xorg xorg-xinit budgie-desktop lightdm lightdm-gtk-greeter gnome-terminal nautilus --noconfirm
-  systemctl enable lightdm
-}
-
-setup_lxqt() {
-  pacman -S xorg xorg-xinit lxqt sddm pcmanfm-qt qterminal --noconfirm
-  systemctl enable sddm
-}
-
-setup_xfce() {
-  pacman -S xorg xorg-xinit xfce4 xfce4-goodies lightdm lightdm-gtk-greeter mousepad xfce4-terminal --noconfirm
-  systemctl enable lightdm
-}
-
-setup_deepin() {
-  pacman -S xorg deepin deepin-terminal deepin-file-manager lightdm lightdm-deepin-greeter --noconfirm
-  systemctl enable lightdm
 }
 
 # Functions
@@ -207,12 +175,12 @@ grub_harden() {
 
   echo -e "${Heading}Setting permission on config files${NC}"
   # Define arrays for different file paths based on the operations required
-  files_0700=(/boot)                                                        # 0700: Owner has read, write, and execute permissions; group and others have no permissions
-  files_644=(/etc/passwd /etc/group /etc/issue)                             # 644: Owner has read and write permissions; group and others have read permissions
-  files_600=(/etc/shadow /etc/gshadow /etc/login.defs)                      # 600: Owner has read and write permissions; group and others have no permissions
-  files_750=(/etc/sudoers.d)                                                # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
-  files_440=(/etc/sudoers)                                                  # 440: Owner has read permissions; group has read permissions; others have no permissions
-  files_og_rwx=(/boot/grub/grub.cfg)                                        # og-rwx: Remove read, write, and execute permissions for group and others
+  files_0700=(/boot)                                   # 0700: Owner has read, write, and execute permissions; group and others have no permissions
+  files_644=(/etc/passwd /etc/group /etc/issue)        # 644: Owner has read and write permissions; group and others have read permissions
+  files_600=(/etc/shadow /etc/gshadow /etc/login.defs) # 600: Owner has read and write permissions; group and others have no permissions
+  files_750=(/etc/sudoers.d)                           # 750: Owner has read, write, and execute permissions; group has read and execute permissions; others have no permissions
+  files_440=(/etc/sudoers)                             # 440: Owner has read permissions; group has read permissions; others have no permissions
+  files_og_rwx=(/boot/grub/grub.cfg)                   # og-rwx: Remove read, write, and execute permissions for group and others
 
   # Changing ownership to root:root
   chown_files=(/etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/ssh/sshd_config /etc/fstab /etc/issue /boot/grub/grub.cfg /etc/sudoers.d /etc/sudoers)
@@ -304,7 +272,7 @@ install() {
   grub_harden
 
   # Desktop Environment
-  setup_de
+  setup_dektop_environment
 
   # Setup extras
   ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap

@@ -206,67 +206,25 @@ select_disk() {
   done
 }
 
-ask_de() {
+ask_dektop_environment() {
   if [ "$DE_SWITCH_SET" -eq 1 ] || [ "$USE_DEFAULTS" -eq 1 ]; then
     return
   fi
 
+  options=("kde" "mate" "gnome" "cinnamon" "budgie" "lxqt" "xfce" "deepin" "none")
+
   echo -e "${Prompt}Enter the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC})${NC}"
-  echo "1) KDE"
-  echo "2) Mate"
-  echo "3) Gnome"
-  echo "4) Cinnamon"
-  echo "5) Budgie"
-  echo "6) LXQt"
-  echo "7) XFCE"
-  echo "8) Deepin"
-  echo "9) None"
+  for i in "${!options[@]}"; do
+    echo "$((i+1))) ${options[$i]^}"
+  done
 
   while true; do
     read -rsn1 opt
-
-    if [ -z "$opt" ]; then
+    if [ -z "$opt" ] || [ "$opt" -lt 1 ] || [ "$opt" -gt ${#options[@]} ]; then
       break
     fi
-
-    case $opt in
-    1)
-      DESKTOP_ENVIRONMENT="kde"
-      break
-      ;;
-    2)
-      DESKTOP_ENVIRONMENT="mate"
-      break
-      ;;
-    3)
-      DESKTOP_ENVIRONMENT="gnome"
-      break
-      ;;
-    4)
-      DESKTOP_ENVIRONMENT="cinnamon"
-      break
-      ;;
-    5)
-      DESKTOP_ENVIRONMENT="budgie"
-      break
-      ;;
-    6)
-      DESKTOP_ENVIRONMENT="lxqt"
-      break
-      ;;
-    7)
-      DESKTOP_ENVIRONMENT="xfce"
-      break
-      ;;
-    8)
-      DESKTOP_ENVIRONMENT="deepin"
-      break
-      ;;
-    9)
-      DESKTOP_ENVIRONMENT="none"
-      break
-      ;;
-    esac
+    DESKTOP_ENVIRONMENT=${options[$((opt-1))]}
+    break
   done
 }
 
@@ -283,7 +241,7 @@ select_settings() {
   prompt_user "Enter your city" CITY true
   prompt_user "Enter your locale" LOCALE
   prompt_user "Enter the desired kernel" KERNEL
-  ask_de
+  ask_dektop_environment
 
   # Use the correct variable name for the target disk
   TIMEZONE="$COUNTRY/$CITY"
