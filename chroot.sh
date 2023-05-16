@@ -228,7 +228,7 @@ install() {
 
   # Set host permissions
   echo "sshd : ALL : ALLOW" >/etc/hosts.allow
-  echo "ALL: LOCAL, 127.0.0.1" >>/etc/hosts.allow
+  echo "ALL: LOCAL, 127.0.0.1, 127.0.1.1, ::1" >>/etc/hosts.allow
   echo "ALL: ALL" >/etc/hosts.deny
 
   # Enable and configure necessary services
