@@ -24,6 +24,9 @@ DESKTOP_ENVIRONMENT='<desktop_environment>'
 GPU='<gpu>'
 PACMAN_PARA='<pacman_para>'
 
+# Forward declarations
+GRUB_GPU=""
+
 # Title
 echo -e "${Title}Arch Linux (${Default}Chroot${Title})${NC}"
 
@@ -76,9 +79,35 @@ setup_gpu() {
 
   echo -e "${Heading}Installing GPU drivers ${Default}${GPU^^}${NC}"
 
-  case "$DESKTOP_ENVIRONMENT" in
+  case "$GPU" in
   "nvidia")
-    pacman -S --needed --noconfirm nvidia-dkms 
+    # Install
+    echo -e "${Heading}Installing ${Default}nvidia-dkms${NC}"
+    pacman -S --needed --noconfirm nvidia-dkms
+
+    # Kernel
+    echo -e "${Heading}Adding GRUB parameter ${Default}nvidia_drm.modeset=1${NC}"
+    GRUB_GPU="nvidia_drm.modeset=1"
+
+    # Hook
+    echo -e "${Heading}Adding pacman hook ${Default}/etc/pacman.d/hooks/nvidia.hook${NC}"
+    cat >/etc/pacman.d/hooks/nvidia.hook <<EOF
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia
+Target=linux
+# Change the linux part above and in the Exec line if a different kernel is used
+
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+EOF
     ;;
   esac
 }
@@ -196,7 +225,7 @@ grub_harden() {
 
   echo -e "${Heading}Hardening GRUB and Kernel boot options${NC}"
   GRUBSEC="\"slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality quiet loglevel=3\""
-  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS\""
+  GRUBCMD="\"cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS $GRUB_GPU\""
   sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=${GRUBSEC}|g" /etc/default/grub
   sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${GRUBCMD}|g" /etc/default/grub
 

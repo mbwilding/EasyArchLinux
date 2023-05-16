@@ -10,5 +10,5 @@ export DEFAULT_DESKTOP_ENVIRONMENT="deepin"
 export DEFAULT_VOLUME_PASSWORD="password"
 export DEFAULT_ROOT_PASSWORD="password"
 export DEFAULT_USER_PASSWORD="password"
-export DEFAULT_GPU="nvidia"
+export DEFAULT_GPU=""
 export DEFAULT_PACMAN_PARA=10
