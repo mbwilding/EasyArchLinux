@@ -2,16 +2,7 @@
 # shellcheck disable=SC2034
 
 # Default Settings
-DEFAULT_HOSTNAME="arch"
-DEFAULT_USERNAME="user"
-DEFAULT_COUNTRY="Australia"
-DEFAULT_CITY="Perth"
-DEFAULT_LOCALE="en_AU"
-DEFAULT_KERNEL="linux-zen"
-DEFAULT_VOLUME_PASSWORD="password"
-DEFAULT_ROOT_PASSWORD="password"
-DEFAULT_USER_PASSWORD="password"
-DEFAULT_DESKTOP_ENVIRONMENT="kde"
+source /path/to/defaults.sh
 
 # Set up the colors
 NC='\033[0m' # No Color
