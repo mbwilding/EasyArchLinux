@@ -70,7 +70,7 @@ setup_desktop_environment() {
 
   case "$DESKTOP_ENVIRONMENT" in
   "kde")
-    pacman -S --needed --noconfirm xorg xorg-xinit plasma-meta sddm konsole
+    pacman -S --needed --noconfirm xorg xorg-xinit plasma-meta sddm packagekit-qt5 konsole
     systemctl enable sddm
     ;;
   "mate")
