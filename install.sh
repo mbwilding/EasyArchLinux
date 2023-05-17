@@ -148,26 +148,25 @@ select_disk() {
     return
   fi
 
-  while true; do
-    echo -e "${Heading}The following disks are available on your system${NC}"
-    # Display the list of available disks with indices
-    for i in "${!AVAILABLE_DISKS[@]}"; do
-      IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$i]}"
-      echo -e "${Success}$(printf "%2d. %-10s %-10s" $((i + 1)) "${arr[0]}" "${Default}${arr[1]}")${NC}"
-    done
+  echo -e "${Heading}The following disks are available on your system${NC}"
+  # Display the list of available disks with indices
+  for i in "${!AVAILABLE_DISKS[@]}"; do
+    IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$i]}"
+    echo -e "${Success}$(printf "%2d. %-10s %-10s" $((i + 1)) "${arr[0]}" "${Default}${arr[1]}")${NC}"
+  done
 
-    # Prompt the user for selection or use the default
-    echo -ne "${Prompt}Select a disk number (${Default}1${Prompt}): ${NC}"
-    read -r
-    if [[ -z $REPLY ]]; then
+  # Prompt the user for selection or use the default
+  echo -ne "${Prompt}Select a disk number (${Default}1${Prompt}): ${NC}"
+
+  while true; do
+    read -rsn1 opt
+    if [[ -z $opt ]]; then
       TARGET_DISK=$DEFAULT_TARGET_DISK
       break
-    elif [[ $REPLY -ge 1 && $REPLY -le ${#AVAILABLE_DISKS[@]} ]]; then
-      IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$((REPLY - 1))]}"
+    elif [[ $opt -ge 1 && $opt -le ${#AVAILABLE_DISKS[@]} ]]; then
+      IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$((opt - 1))]}"
       TARGET_DISK=${arr[0]}
       break
-    else
-      echo -e "${Error}Invalid selection${NC}"
     fi
   done
 }
