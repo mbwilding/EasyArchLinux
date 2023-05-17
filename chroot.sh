@@ -281,8 +281,7 @@ install() {
   CPU_VENDOR_ID=$(lscpu | grep Vendor | awk '{print $3}')
 
   # Enable multilib
-  sed -i '/#\[multilib\]/s/^#//g' /etc/pacman.conf
-  sed -i '/#Include = \/etc\/pacman.d\/mirrorlist/s/^#//g' /etc/pacman.conf
+  sed -i '/#\[multilib\]/,/#Include = \/etc\/pacman.d\/mirrorlist/{s/^#//g}' /etc/pacman.conf
 
   pacman_para
   pacman-key --init
