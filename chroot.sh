@@ -280,6 +280,10 @@ install() {
   UUID=$(cryptsetup luksDump "$DISK_PREFIX"3 | grep UUID | awk '{print $2}')
   CPU_VENDOR_ID=$(lscpu | grep Vendor | awk '{print $3}')
 
+  # Enable multilib
+  sed -i '/#\[multilib\]/s/^#//g' /etc/pacman.conf
+  sed -i '/#Include = \/etc\/pacman.d\/mirrorlist/s/^#//g' /etc/pacman.conf
+
   pacman_para
   pacman-key --init
   pacman-key --populate archlinux
