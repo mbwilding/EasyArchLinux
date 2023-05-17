@@ -329,9 +329,9 @@ install() {
 
   # Add an entry to fstab so the new mountpoint will be mounted on boot
   echo -e "${Heading}Adding tmpfs to fstab${NC}"
-  echo "tmpfs /tmp tmpfs rw,nosuid,nodev,noexec,relatime,size=2G 0 0" >>/mnt/etc/fstab
+  echo "tmpfs /tmp tmpfs rw,nosuid,nodev,relatime,size=2G 0 0" >>/mnt/etc/fstab
   echo -e "${Heading}Adding proc to fstab and hardening it${NC}"
-  echo "proc /proc proc nosuid,nodev,noexec,hidepid=2,gid=proc 0 0" >>/etc/fstab
+  echo "proc /proc proc nosuid,nodev,hidepid=2,gid=proc 0 0" >>/etc/fstab
   touch /etc/systemd/system/systemd-logind.service.d/hidepid.conf
   echo "[Service]" >>/etc/systemd/system/systemd-logind.service.d/hidepid.conf
   echo "SupplementaryGroups=proc" >>/etc/systemd/system/systemd-logind.service.d/hidepid.conf
