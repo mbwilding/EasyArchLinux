@@ -157,7 +157,7 @@ setup_desktop_environment() {
     systemctl enable lightdm
     ;;
   "deepin")
-    pacman -S --needed --noconfirm xorg xorg-xinit deepin lightdm gvfs-smb deepin-terminal
+    pacman -S --needed --noconfirm xorg xorg-xinit deepin deepin-kwin deepin-extra lightdm gvfs-smb deepin-terminal
     systemctl enable lightdm
     ;;
   esac
