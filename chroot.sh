@@ -92,7 +92,7 @@ setup_gpu() {
     # Kernel
     echo -e "${Heading}Adding GRUB parameter ${Default}nvidia_drm.modeset=1${NC}"
     GRUB_GPU="nvidia_drm.modeset=1"
-    
+
     # Modules
     sed -i "s|^MODULES=.*|MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
 
@@ -234,14 +234,14 @@ grub_harden() {
   sed -i '/GRUB_ENABLE_CRYPTODISK/s/^#//g' /etc/default/grub
 
   echo -e "${Heading}Hardening GRUB and Kernel boot options${NC}"
-  
+
   # TODO Using GPU dkms causes boot failure when hardened, disabled if using GPU dkms
   if [ -z "$GPU" ]; then
     GRUBSEC="slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality"
   else
     GRUBSEC=""
   fi
-  
+
   GRUBCMD="cryptdevice=UUID=$UUID:$LVM_NAME root=/dev/mapper/$LVM_NAME-root cryptkey=rootfs:$LUKS_KEYS"
   sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUBSEC quiet loglevel=3\"|g" /etc/default/grub
   sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"$GRUBCMD $GRUB_GPU\"|g" /etc/default/grub
