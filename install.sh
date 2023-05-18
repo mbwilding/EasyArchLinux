@@ -161,7 +161,6 @@ select_disk() {
     read -rsn1 opt
     if [[ -z $opt ]]; then
       TARGET_DISK=$DEFAULT_TARGET_DISK
-      echo
       break
     elif [[ $opt -ge 1 && $opt -le ${#AVAILABLE_DISKS[@]} ]]; then
       IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$((opt - 1))]}"
@@ -169,6 +168,7 @@ select_disk() {
       break
     fi
   done
+  echo
 }
 
 ask_desktop_environment() {
