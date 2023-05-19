@@ -4,7 +4,9 @@
 
 These scripts are designed to simplify the process of installing Arch Linux with UEFI and Full Disk Encryption (LUKS).
 
-**Warning**: This process will wipe the entire selected disk. If only one disk is available, it will be chosen by default. You will be asked to confirm all settings and changes before they are made, unless the default switch is provided.
+**Warning**: This process will wipe the entire selected disk. If only one disk is available, it will be chosen by
+default. You will be asked to confirm all settings and changes before they are made, unless the default switch is
+provided.
 
 ## Installation
 
@@ -35,6 +37,7 @@ chmod +x *.sh
 Once you are booted and logged in, open up the terminal and run this.
 
 This will install Pamac, which grants you access to the [AUR](https://aur.archlinux.org/)
+
 ```bash
 curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/extras/essentials.sh
 chmod +x essentials.sh
@@ -50,7 +53,8 @@ You can edit the `defaults.sh` file to change the default settings.
 
 The following switches can be used on `install.sh` or `bootstrap.sh`.
 
-Running `-d` or `--defaults` will install with default settings. If the default disk is not found, you will still be prompted unless there is only one disk.
+Running `-d` or `--defaults` will install with default settings. If the default disk is not found, you will still be
+prompted unless there is only one disk.
 
 Default settings can be overridden with the following switches, even when combined with the default switch:
 
