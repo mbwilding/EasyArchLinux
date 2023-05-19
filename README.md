@@ -30,6 +30,18 @@ chmod +x *.sh
 ./install.sh
 ```
 
+## Post-Install
+
+Once you are booted and logged in, open up the terminal and run this.
+
+This will install Pamac, which grants you access to the [AUR](https://aur.archlinux.org/)
+```bash
+curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/extras/essentials.sh
+chmod +x essentials.sh
+./essentials.sh
+rm essentials.sh
+```
+
 ## Editing Defaults
 
 You can edit the `defaults.sh` file to change the default settings.
