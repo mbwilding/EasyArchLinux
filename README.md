@@ -1,47 +1,60 @@
-## Easy Arch Linux
+# Easy Arch Linux
 
-### Information
-These scripts are to facilitate installing Arch Linux with UEFI and Full Disk Encryption (LUKS)<br>
-This will wipe the entire disk that is selected, if there is only one disk available, it'll be selected by default.<br>
-You will be prompted for all of the settings and asked to confirm before any changes are made, unless the ```-d``` default switch is provided.
+## Information
 
-### Installation
-Download the [Arch ISO](https://archlinux.org/download/).<br>
-Boot the ISO via creating a [Bootable USB](https://wiki.archlinux.org/title/USB_flash_installation_medium).<br>
-If you're on wireless, [Wireless Setup](https://wiki.archlinux.org/title/Iwd#iwctl).
+These scripts are designed to simplify the process of installing Arch Linux with UEFI and Full Disk Encryption (LUKS).
 
-Steps without git;
+**Warning**: This process will wipe the entire selected disk. If only one disk is available, it will be chosen by default. You will be asked to confirm all settings and changes before they are made, unless the default switch is provided.
 
-    curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/bootstrap.sh
-    chmod +x bootstrap.sh
-    ./bootstrap.sh
+## Installation
+
+1. Download the [Arch ISO](https://archlinux.org/download/).
+2. Create a [Bootable USB](https://wiki.archlinux.org/title/USB_flash_installation_medium) and boot the ISO.
+3. If you're on wireless, follow this [Wireless Setup guide](https://wiki.archlinux.org/title/Iwd#iwctl).
+
+Steps without git:
+
+```bash
+curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/bootstrap.sh
+chmod +x bootstrap.sh
+./bootstrap.sh
+```
 
 Steps with git;
 
-    pacman -S git
-    git clone https://github.com/mbwilding/EasyArchLinux.git
-    cd EasyArchLinux
-    chmod +x *.sh
-    ./install.sh
+```bash
+pacman -S git
+git clone https://github.com/mbwilding/EasyArchLinux.git
+cd EasyArchLinux
+chmod +x *.sh
+./install.sh
+```
 
-### Editing defaults
-You can edit the ```defaults.sh``` file, which is where ```install.sh``` gets its defaults from.
+## Editing Defaults
 
-### Switches
-These switches can be used on ```install.sh``` or ```bootstrap.sh```<br>
+You can edit the `defaults.sh` file to change the default settings.
 
-Running ```-d``` will install with defaults.<br>
-If there are multiple disks detected, it will still prompt.<br>
+## Switches
 
-Some additional switches for selecting the desktop environment.<br>
-It will use the default if not supplied.
+The following switches can be used on `install.sh` or `bootstrap.sh`.
 
-    -kde
-    -mate
-    -gnome
-    -cinnamon
-    -budgie
-    -lxqt
-    -xfce
-    -deepin
-    -none
+Running `-d` or `--defaults` will install with default settings. If the default disk is not found, you will still be prompted unless there is only one disk.
+
+Default settings can be overridden with the following switches, even when combined with the default switch:
+
+- `-disk`: Provide a value from `lsblk -d`.
+- `-de`: Choose a desktop environment:
+    - `none`
+    - `kde`
+    - `mate`
+    - `gnome`
+    - `cinnamon`
+    - `budgie`
+    - `lxqt`
+    - `xfce`
+    - `deepin`
+- `-gpu`: Choose a GPU type:
+    - `none`
+    - `nvidia`
+    - `amd` (Not yet implemented)
+    - `intel` (Not yet implemented)

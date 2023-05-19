@@ -16,37 +16,57 @@ Title='\033[1;36m'
 # Title
 echo -e "${Title}Arch Linux (${Default}Install${Title})${NC}"
 
-# Switches
-USE_DEFAULTS=0
-DE_SWITCH_SET=0
-DESKTOP_ENVIRONMENT=""
-GPU=""
 
-while (("$#")); do
+# Backing fields
+USE_DEFAULTS=0
+DISK_SWITCH_SET=0
+DE_SWITCH_SET=0
+GPU_SWITCH_SET=0
+
+# Switches
+while [[ "$#" -gt 0 ]]; do
   case "$1" in
-  -d)
+  -d | --defaults)
     USE_DEFAULTS=1
     echo -e "${Error}Using defaults${NC}"
     ;;
-  -none | -kde | -mate | -gnome | -cinnamon | -budgie | -lxqt | -xfce | -deepin)
-    DESKTOP_ENVIRONMENT="${1#-}"
-    DE_SWITCH_SET=1
+  -disk)
+    shift
+    if [[ -n "$1" ]]; then
+      DEFAULT_DISK="$1"
+      DISK_SWITCH_SET=1
+    else
+      echo -e "${Error}Missing disk argument${NC}"
+      exit 1
+    fi
     ;;
-  -nvidia)
-    GPU="${1#-}"
+  -de)
+    shift
+    if [[ -n "$1" ]]; then
+      DEFAULT_DESKTOP_ENVIRONMENT="$1"
+      DE_SWITCH_SET=1
+    else
+      echo -e "${Error}Missing desktop environment argument${NC}"
+      exit 1
+    fi
     ;;
-  *) ;;
+  -gpu)
+    shift
+    if [[ -n "$1" ]]; then
+      DEFAULT_GPU="$1"
+      GPU_SWITCH_SET=1
+    else
+      echo -e "${Error}Missing GPU argument${NC}"
+      exit 1
+    fi
+    ;;
+  *)
+    echo -e "${Error}Unrecognized switch: $1${NC}"
+    exit 1
+    ;;
   esac
   shift
 done
-
-if [[ $USE_DEFAULTS -eq 1 && $DE_SWITCH_SET -eq 0 ]]; then
-  DESKTOP_ENVIRONMENT=$DEFAULT_DESKTOP_ENVIRONMENT
-fi
-
-if [ -z "$DESKTOP_ENVIRONMENT" ]; then
-  DESKTOP_ENVIRONMENT=$DEFAULT_DESKTOP_ENVIRONMENT
-fi
 
 # Helper functions
 prompt_user() {
@@ -61,7 +81,14 @@ prompt_user() {
   else
     while true; do
       echo -ne "${Prompt}${prompt} (${Default}${!default_var_name}${Prompt}): ${NC}"
-      read -r response
+
+      if [[ "$var_name" == *"PASSWORD"* ]]; then
+        read -rs response
+        echo
+      else
+        read -r response
+      fi
+
       if [[ $response = *[[:space:]]* ]]; then
         echo -e "${Error}Please do not include spaces${NC}"
       else
@@ -77,9 +104,51 @@ prompt_user() {
   eval $var_name=${response:-${!default_var_name}}
 }
 
+ask_option() {
+  local -n selected_option=$1
+  local switch_set=$2
+  local use_defaults=$3
+  local options=("${!4}")
+  local prompt_message=$5
+  local default_option=$6
+  local indexed=$7
+  local multi_field=$8
+  
+  if [ -n "$default_option" ]; then
+      selected_option="$default_option"
+  fi
+
+  [ "$switch_set" -eq 1 ] || [ "$use_defaults" -eq 1 ] && return
+
+  echo -e "${Prompt}Enter a number for the desired $prompt_message (${Default}${selected_option}${NC}${Prompt}):${NC}"
+  for i in "${!options[@]}"; do
+    if [[ $multi_field -eq 1 ]]; then
+      IFS=' ' read -r -a arr <<<"${options[$i]}"
+      echo -e "${Success}$(printf "%2d. %-10s %-10s" $((i + 1)) "${arr[0]}" "${Default}${arr[1]}")${NC}"
+    else
+      echo -e "${Prompt}$((i))${Default}) ${Success}${options[$i]^}${NC}"
+    fi
+  done
+
+  while true; do
+    read -rsn1 opt
+    if [[ -z $opt ]] && [[ -n $default_option ]]; then
+      selected_option=$default_option
+      break
+    elif [[ $opt -ge 0 && $opt -lt ${#options[@]} ]] && [[ $indexed -eq 0 ]]; then
+      selected_option=${options[$opt]}
+      break
+    elif [[ $opt -ge 1 && $opt -le ${#options[@]} ]] && [[ $indexed -eq 1 ]]; then
+      IFS=' ' read -r -a arr <<<"${options[$((opt - 1))]}"
+      selected_option=${arr[0]}
+      break
+    fi
+  done
+}
+
 prompt_continue() {
   if ((USE_DEFAULTS == 0)); then
-    echo -ne "${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
+    echo -ne "${Error}The drive will be wiped\n${Prompt}Do you want to continue? (${Default}Enter${Prompt})${NC}"
     read -rsn1 CONTINUE
     echo
     if [ "$CONTINUE" != "" ]; then
@@ -130,72 +199,54 @@ pacman_para() {
   fi
 }
 
-select_disk() {
+ask_disk() {
   readarray -t AVAILABLE_DISKS < <(lsblk -d -o NAME,TYPE,SIZE | grep 'disk' | awk '{print $1, $3}')
-  DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
 
-  # Check if the array is empty
   if [ ${#AVAILABLE_DISKS[@]} -eq 0 ]; then
     echo -e "${Error}No disks detected${NC}"
     exit 1
   fi
+  
+  if [[ $DISK_SWITCH_SET -eq 1 && ! " ${AVAILABLE_DISKS[@]} " =~ " ${DEFAULT_DISK} " ]]; then
+    echo -e "${Error}Provided disk not found (${Default}${DEFAULT_DISK}${Error})${NC}"
+    echo -e "${Error}Available Disks:${NC}"
+    for disk in "${AVAILABLE_DISKS[@]}"; do
+      IFS=' ' read -r -a arr <<<"$disk"
+      echo -e "${Success}$(printf "%-10s %-10s" "${arr[0]}" "${Default}${arr[1]}")${NC}"
+    done
+    exit 1
+  fi
+  
+  # Set DEFAULT_TARGET_DISK as the first available disk by default
+  DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
 
-  # Check if there's only one disk
-  if [ ${#AVAILABLE_DISKS[@]} -eq 1 ]; then
-    echo -e "${Prompt}Only one disk detected (${Default}${DEFAULT_TARGET_DISK}${Prompt})${NC}"
-    TARGET_DISK=$DEFAULT_TARGET_DISK
-    return
+  # If DEFAULT_DISK is set and exists in the available disks, set it as the default
+  if [ -n "$DEFAULT_DISK" ]; then
+    for disk in "${AVAILABLE_DISKS[@]}"; do
+      if [[ $(echo "$disk" | awk '{print $1}') == "$DEFAULT_DISK" ]]; then
+        DEFAULT_TARGET_DISK=$DEFAULT_DISK
+        break
+      fi
+    done
   fi
 
-  echo -e "${Heading}The following disks are available on your system${NC}"
-  # Display the list of available disks with indices
-  for i in "${!AVAILABLE_DISKS[@]}"; do
-    IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$i]}"
-    echo -e "${Success}$(printf "%2d. %-10s %-10s" $((i + 1)) "${arr[0]}" "${Default}${arr[1]}")${NC}"
-  done
-
-  # Prompt the user for selection or use the default
-  echo -ne "${Prompt}Select a disk number (${Default}1${Prompt}): ${NC}"
-
-  while true; do
-    read -rsn1 opt
-    if [[ -z $opt ]]; then
-      TARGET_DISK=$DEFAULT_TARGET_DISK
-      break
-    elif [[ $opt -ge 1 && $opt -le ${#AVAILABLE_DISKS[@]} ]]; then
-      IFS=' ' read -r -a arr <<<"${AVAILABLE_DISKS[$((opt - 1))]}"
-      TARGET_DISK=${arr[0]}
-      break
-    fi
-  done
-  echo
+  ask_option TARGET_DISK "$DISK_SWITCH_SET" "$USE_DEFAULTS" AVAILABLE_DISKS[@] "disk" $DEFAULT_TARGET_DISK 1 1
 }
 
 ask_desktop_environment() {
-  if [ "$DE_SWITCH_SET" -eq 1 ] || [ "$USE_DEFAULTS" -eq 1 ]; then
-    return
-  fi
-
   options=("none" "kde" "mate" "gnome" "cinnamon" "budgie" "lxqt" "xfce" "deepin")
+  ask_option DESKTOP_ENVIRONMENT "$DE_SWITCH_SET" "$USE_DEFAULTS" options[@] "desktop environment" $DEFAULT_DESKTOP_ENVIRONMENT 0 0
+}
 
-  echo -e "${Prompt}Enter a number for the desired desktop environment (${Default}${DESKTOP_ENVIRONMENT}${NC}${Prompt}):${NC}"
-  for i in "${!options[@]}"; do
-    echo -e "${Prompt}$((i))${Default}) ${Success}${options[$i]^}${NC}"
-  done
-
-  while true; do
-    read -rsn1 opt
-    if [ -n "$opt" ] && [ "$opt" -ge 0 ] && [ "$opt" -lt ${#options[@]} ]; then
-      DESKTOP_ENVIRONMENT=${options[$opt]}
-      break
-    fi
-  done
+ask_gpu() {
+  options=("none" "nvidia" "amd" "intel")
+  ask_option GPU "$GPU_SWITCH_SET" "$USE_DEFAULTS" options[@] "GPU" $DEFAULT_GPU 0 0
 }
 
 select_settings() {
   echo -e "${Heading}Configuration${NC}"
 
-  select_disk
+  ask_disk
   prompt_user "Enter download concurrency" PACMAN_PARA
   prompt_user "Enter the new hostname" HOSTNAME
   prompt_user "Enter the new user" USERNAME
@@ -207,8 +258,9 @@ select_settings() {
   prompt_user "Enter your locale" LOCALE
   prompt_user "Enter the desired kernel" KERNEL
   ask_desktop_environment
+  ask_gpu
 
-  # Use the correct variable name for the target disk
+  # Setup more parameters
   TIMEZONE="$COUNTRY/$CITY"
   DISK="/dev/$TARGET_DISK"
   CRYPT_NAME='crypt_lvm'    # the name of the LUKS container.
@@ -222,18 +274,15 @@ confirm_settings() {
   echo -e "${Success}Disk: ${Default}${TARGET_DISK}${NC}"
   echo -e "${Success}Host: ${Default}${HOSTNAME}${NC}"
   echo -e "${Success}User: ${Default}${USERNAME}${NC}"
-  echo -e "${Success}User Password: ${Default}${USER_PASSWORD}${NC}"
-  echo -e "${Success}Root Password: ${Default}${ROOT_PASSWORD}${NC}"
-  echo -e "${Success}Volume Password: ${Default}${VOLUME_PASSWORD}${NC}"
+  # echo -e "${Success}User Password: ${Default}${USER_PASSWORD}${NC}"
+  # echo -e "${Success}Root Password: ${Default}${ROOT_PASSWORD}${NC}"
+  # echo -e "${Success}Volume Password: ${Default}${VOLUME_PASSWORD}${NC}"
   echo -e "${Success}Country: ${Default}${COUNTRY}${NC}"
   echo -e "${Success}City: ${Default}${CITY}${NC}"
   echo -e "${Success}Locale: ${Default}${LOCALE}${NC}"
   echo -e "${Success}Kernel: ${Default}${KERNEL}${NC}"
   echo -e "${Success}Desktop Environment: ${Default}${DESKTOP_ENVIRONMENT}${NC}"
-
-  if [ -n "$GPU" ]; then
-    echo -e "${Success}GPU: ${Default}${GPU}${NC}"
-  fi
+  echo -e "${Success}GPU: ${Default}${GPU}${NC}"
 
   prompt_continue
 }

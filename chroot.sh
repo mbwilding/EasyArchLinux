@@ -72,34 +72,46 @@ pacman_para() {
 
 # Setup GPU
 setup_gpu() {
-
-  if [ -z "$GPU" ]; then
-    return
-  fi
+  if [ -z "$GPU" ]; then return; fi
 
   echo -e "${Heading}Installing GPU drivers ${Default}${GPU^^}${NC}"
 
   case "$GPU" in
   "nvidia")
-    # Blacklist Nouveau driver
-    mkdir -p /etc/modprobe.d/
-    echo "blacklist nouveau" >/etc/modprobe.d/nouveau_blacklist.conf
+    setup_nvidia
+    ;;
+  "amd") # TODO
+    echo -e "${Error}AMD: Not implemented${NC}"
+    ;;
+  "intel") # TODO
+    echo -e "${Error}INTEL: Not implemented${NC}"
+    ;;
+  esac
+}
 
-    # Install
-    echo -e "${Heading}Installing ${Default}nvidia-dkms${NC}"
-    pacman -S --needed --noconfirm nvidia-dkms nvidia-settings
+# GPU specific
+setup_nvidia() {
+  # Blacklist Nouveau driver
+  mkdir -p /etc/modprobe.d/
+  echo "blacklist nouveau" >/etc/modprobe.d/nouveau_blacklist.conf
 
-    # Kernel
-    echo -e "${Heading}Adding GRUB parameter ${Default}nvidia_drm.modeset=1${NC}"
-    GRUB_GPU="nvidia_drm.modeset=1"
+  # Install
+  pacman -S --needed --noconfirm nvidia-dkms nvidia-settings nvidia-prime
 
-    # Modules
-    sed -i "s|^MODULES=.*|MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
+  # Kernel
+  echo -e "${Heading}Adding GRUB parameters"
+  GRUB_GPU="nvidia_drm.modeset=1"
 
-    # Hook
-    echo -e "${Heading}Adding pacman hook ${Default}/etc/pacman.d/hooks/nvidia.hook${NC}"
-    mkdir -p /etc/pacman.d/hooks/
-    cat >/etc/pacman.d/hooks/nvidia.hook <<EOF
+  # Modules
+  sed -i "s|^MODULES=.*|MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
+
+  # Create X11 config
+  nvidia-xconfig
+
+  # Pacman Hook
+  echo -e "${Heading}Adding pacman hook ${Default}/etc/pacman.d/hooks/nvidia.hook${NC}"
+  mkdir -p /etc/pacman.d/hooks/
+  cat >/etc/pacman.d/hooks/nvidia.hook <<EOF
 [Trigger]
 Operation=Install
 Operation=Upgrade
@@ -115,11 +127,12 @@ When=PostTransaction
 NeedsTargets
 Exec=/bin/sh -c 'while read -r trg; do case \$trg in $KERNEL) exit 0; esac; done; /usr/bin/mkinitcpio -p $KERNEL'
 EOF
+}
 
-    # Create X11 config
-    nvidia-xconfig
-    ;;
-  esac
+setup_bluetooth() {
+  pacman -S bluez bluez-utils
+  systemctl enable bluetooth
+  usermod -a -G lp $USERNAME
 }
 
 # Desktop environments
@@ -236,7 +249,7 @@ grub_harden() {
   echo -e "${Heading}Hardening GRUB and Kernel boot options${NC}"
 
   # TODO Using GPU dkms causes boot failure when hardened, disabled if using GPU dkms
-  if [ -z "$GPU" ]; then
+  if [ "$GPU" = "none" ]; then
     GRUBSEC="slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality"
   else
     GRUBSEC=""
@@ -356,6 +369,9 @@ install() {
 
   #gpu
   setup_gpu
+  
+  # Bluetooth
+  setup_bluetooth
 
   # Harden
   sudo_harden
