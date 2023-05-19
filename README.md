@@ -4,7 +4,7 @@
 
 🚀 Introducing EasyArchLinux - your ultimate companion for a hassle-free Arch Linux installation experience!
 
-This toolkit is designed to make installing Arch Linux with UEFI and Full Disk Encryption (LUKS) a breeze. We've taken care of all the complex steps - you're in full control of confirming all settings and changes. 🛡️
+This toolkit is designed to make installing Arch Linux with UEFI and Full Disk Encryption (LUKS) a breeze. I've taken care of all the complex steps - you're in full control of confirming all settings and changes. 🛡️
 
 One of the standout features of EasyArchLinux is its broad support for major desktop environments. Whether you're a fan of KDE, Gnome, XFCE, Cinnamon, Mate, Budgie, LXQT, Deepin, or just prefer a minimal setup, this tool caters to your unique preference, letting you create the perfect Linux environment for your needs. 🎛️
 
