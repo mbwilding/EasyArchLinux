@@ -238,7 +238,7 @@ ask_desktop_environment() {
 }
 
 ask_gpu() {
-  options=("none" "nvidia" "amd" "intel")
+  options=("none" "nvidia") # TODO "amd" "intel"
   ask_option GPU "$GPU_SWITCH_SET" "$USE_DEFAULTS" options[@] "GPU" $DEFAULT_GPU 0 0
 }
 

@@ -1,8 +1,20 @@
 # Easy Arch Linux
 
-## Information
+## Introduction
 
-These scripts are designed to simplify the process of installing Arch Linux with UEFI and Full Disk Encryption (LUKS).
+🚀 Introducing EasyArchLinux - your ultimate companion for a hassle-free Arch Linux installation experience!
+
+This toolkit is designed to make installing Arch Linux with UEFI and Full Disk Encryption (LUKS) a breeze. We've taken care of all the complex steps - you're in full control of confirming all settings and changes. 🛡️
+
+One of the standout features of EasyArchLinux is its broad support for major desktop environments. Whether you're a fan of KDE, Gnome, XFCE, Cinnamon, Mate, Budgie, LXQT, Deepin, or just prefer a minimal setup, this tool caters to your unique preference, letting you create the perfect Linux environment for your needs. 🎛️
+
+Beyond the installation, EasyArchLinux takes care of essential post-install steps, ensuring you have access to key resources like Pamac and the AUR. 📚
+
+Jumpstart your Arch Linux journey with EasyArchLinux today!
+
+Don't forget to leave a ⭐ if you love my work!
+
+## Information
 
 **Warning**: This process will wipe the entire selected disk. If only one disk is available, it will be chosen by
 default. You will be asked to confirm all settings and changes before they are made, unless the default switch is
@@ -72,8 +84,6 @@ Default settings can be overridden with the following switches, even when combin
     - `lxqt`
     - `xfce`
     - `deepin`
-- `-gpu`: Choose a GPU type:
+- `-gpu`: Choose a GPU type (AMD and Intel soon to come):
     - `none`
     - `nvidia`
-    - `amd` (Not yet implemented)
-    - `intel` (Not yet implemented)
