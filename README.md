@@ -13,8 +13,11 @@ provided.
 1. Download the [Arch ISO](https://archlinux.org/download/).
 2. Create a [Bootable USB](https://wiki.archlinux.org/title/USB_flash_installation_medium) and boot the ISO.
 3. If you're on wireless, follow this [Wireless Setup guide](https://wiki.archlinux.org/title/Iwd#iwctl).
+   ```bash
+   iwctl station wlan0 connect "Wifi Name"
+   ```
 
-Steps without git:
+#### Install (Without GIT)
 
 ```bash
 curl -O https://raw.githubusercontent.com/mbwilding/EasyArchLinux/main/bootstrap.sh
@@ -22,7 +25,7 @@ chmod +x bootstrap.sh
 ./bootstrap.sh
 ```
 
-Steps with git;
+#### Install (With GIT)
 
 ```bash
 pacman -S git
