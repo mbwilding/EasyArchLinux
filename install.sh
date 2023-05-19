@@ -16,7 +16,6 @@ Title='\033[1;36m'
 # Title
 echo -e "${Title}Arch Linux (${Default}Install${Title})${NC}"
 
-
 # Backing fields
 USE_DEFAULTS=0
 DISK_SWITCH_SET=0
@@ -113,9 +112,9 @@ ask_option() {
   local default_option=$6
   local indexed=$7
   local multi_field=$8
-  
+
   if [ -n "$default_option" ]; then
-      selected_option="$default_option"
+    selected_option="$default_option"
   fi
 
   [ "$switch_set" -eq 1 ] || [ "$use_defaults" -eq 1 ] && return
@@ -206,7 +205,7 @@ ask_disk() {
     echo -e "${Error}No disks detected${NC}"
     exit 1
   fi
-  
+
   if [[ $DISK_SWITCH_SET -eq 1 && ! " ${AVAILABLE_DISKS[@]} " =~ " ${DEFAULT_DISK} " ]]; then
     echo -e "${Error}Provided disk not found (${Default}${DEFAULT_DISK}${Error})${NC}"
     echo -e "${Error}Available Disks:${NC}"
@@ -216,7 +215,7 @@ ask_disk() {
     done
     exit 1
   fi
-  
+
   # Set DEFAULT_TARGET_DISK as the first available disk by default
   DEFAULT_TARGET_DISK=$(echo "${AVAILABLE_DISKS[0]}" | awk '{print $1}')
 

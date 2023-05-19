@@ -369,7 +369,7 @@ install() {
 
   #gpu
   setup_gpu
-  
+
   # Bluetooth
   setup_bluetooth
 
