@@ -185,6 +185,7 @@ check_root() {
 check_uefi() {
   if [ ! -d "/sys/firmware/efi/efivars" ]; then
     echo -e "${Error}UEFI is not supported${NC}"
+    echo -e "${Error}If using VMWare, edit the ${Prompt}.vmx${Error} file and add ${Prompt}firmware=\"efi\"${NC}"
     exit 1
   fi
 }
