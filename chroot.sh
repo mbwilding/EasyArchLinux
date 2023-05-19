@@ -381,7 +381,8 @@ install() {
   setup_desktop_environment
 
   # Setup extras
-  ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
+  setup_swap
+  # ask_and_execute "Install dynamic swap using systemd-swap?" setup_swap
 }
 
 finish() {
