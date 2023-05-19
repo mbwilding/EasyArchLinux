@@ -57,7 +57,7 @@ ask_and_execute() {
 # Optional install functions
 setup_swap() {
   pacman -S systemd-swap --noconfirm
-  echo 'swapfc_enabled=1' >>/etc/systemd/swap.conf
+  sed -i 's/#swapfc_enabled=0/swapfc_enabled=1/g' /etc/systemd/swap.conf
   systemctl enable systemd-swap
 }
 
