@@ -1,4 +1,4 @@
-# Easy Arch Linux
+# EasyArchLinux
 
 ## Introduction
 
