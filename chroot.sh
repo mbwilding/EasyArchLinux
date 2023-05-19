@@ -248,9 +248,10 @@ grub_harden() {
 
   echo -e "${Heading}Hardening GRUB and Kernel boot options${NC}"
 
-  # TODO Using GPU dkms causes boot failure when hardened, disabled if using GPU dkms
+  # TODO Using GPU dkms causes boot failure when hardened, disabled if using GPU dkms. Will revise hardening.
   if [ "$GPU" = "none" ]; then
-    GRUBSEC="slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality"
+    GRUBSEC=""
+    # GRUBSEC="slab_nomerge init_on_alloc=1 init_on_free=1 page_alloc.shuffle=1 pti=on randomize_kstack_offset=on vsyscall=none lockdown=confidentiality"
   else
     GRUBSEC=""
   fi
